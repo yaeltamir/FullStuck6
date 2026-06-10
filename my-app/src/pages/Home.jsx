@@ -252,17 +252,6 @@ export default function Home() {
           Posts
         </Link>
 
-        <Link
-          to={`/users/${user.username}/albums`}
-          className={
-            location.pathname.endsWith("/albums")
-              ? "active-link"
-              : ""
-          }
-        >
-          Albums
-        </Link>
-
         {user.role === "admin" && (
           <Link
             to={`/users/${user.username}/admin`}

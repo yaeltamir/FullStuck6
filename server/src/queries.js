@@ -7,7 +7,7 @@
 //  is_deleted=1 instead of removing the row.
 // ============================================================
 import { query, nextId, buildFilter } from './db.js';
-import { toUser, toUserPrivate, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
+import { toUser, toUserPrivate, toPost, toComment, toTodo } from './mappers.js';
 
 // ---------- USERS (no password ever returned) ----------
 export async function getUsers(filters = {}) {
@@ -183,81 +183,6 @@ export async function deleteTodo(id) {
 }
 export async function ownsTodo(id, userId) {
   const rows = await query('SELECT user_id FROM todos WHERE id = ? AND is_deleted = 0', [id]);
-  if (!rows.length) return null;
-  return rows[0].user_id === userId;
-}
-
-// ---------- ALBUMS ----------
-export async function getAlbums(filters = {}) {
-  const { where, values } = buildFilter(filters, { userId: 'user_id', id: 'id' });
-  const rows = await query(`SELECT * FROM albums ${where} ORDER BY id`, values);
-  return rows.map(toAlbum);
-}
-export async function getAlbumById(id) {
-  const rows = await query('SELECT * FROM albums WHERE id = ? AND is_deleted = 0', [id]);
-  return rows.length ? toAlbum(rows[0]) : null;
-}
-export async function getAlbumPhotos(albumId) {
-  const rows = await query('SELECT * FROM photos WHERE album_id = ? AND is_deleted = 0 ORDER BY id', [albumId]);
-  return rows.map(toPhoto);
-}
-export async function createAlbum(d) {
-  const id = await nextId('albums', 'ALB');
-  await query('INSERT INTO albums (id, user_id, title) VALUES (?,?,?)', [id, d.userId, d.title]);
-  return getAlbumById(id);
-}
-export async function updateAlbum(id, d) {
-  const cur = (await query('SELECT * FROM albums WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE albums SET user_id=?, title=? WHERE id=?',
-    [d.userId ?? cur.user_id, d.title ?? cur.title, id]);
-  return getAlbumById(id);
-}
-export async function deleteAlbum(id) {
-  const r = await query('UPDATE albums SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
-  // Cascade: deleting an album (soft) deletes its photos too.
-  if (r.affectedRows) await query('UPDATE photos SET is_deleted = 1 WHERE album_id = ?', [id]);
-  return r.affectedRows > 0;
-}
-export async function ownsAlbum(id, userId) {
-  const rows = await query('SELECT user_id FROM albums WHERE id = ? AND is_deleted = 0', [id]);
-  if (!rows.length) return null;
-  return rows[0].user_id === userId;
-}
-
-// ---------- PHOTOS ----------
-export async function getPhotos(filters = {}) {
-  const { where, values } = buildFilter(filters, { albumId: 'album_id', id: 'id' });
-  const rows = await query(`SELECT * FROM photos ${where} ORDER BY id`, values);
-  return rows.map(toPhoto);
-}
-export async function getPhotoById(id) {
-  const rows = await query('SELECT * FROM photos WHERE id = ? AND is_deleted = 0', [id]);
-  return rows.length ? toPhoto(rows[0]) : null;
-}
-export async function createPhoto(d) {
-  const id = await nextId('photos', 'PH');
-  await query('INSERT INTO photos (id, album_id, title, url, thumbnail_url) VALUES (?,?,?,?,?)',
-    [id, d.albumId, d.title, d.url ?? null, d.thumbnailUrl ?? null]);
-  return getPhotoById(id);
-}
-export async function updatePhoto(id, d) {
-  const cur = (await query('SELECT * FROM photos WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE photos SET album_id=?, title=?, url=?, thumbnail_url=? WHERE id=?',
-    [d.albumId ?? cur.album_id, d.title ?? cur.title, d.url ?? cur.url,
-     d.thumbnailUrl ?? cur.thumbnail_url, id]);
-  return getPhotoById(id);
-}
-export async function deletePhoto(id) {
-  const r = await query('UPDATE photos SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
-  return r.affectedRows > 0;
-}
-// A photo belongs to whoever owns its album.
-export async function ownsPhoto(id, userId) {
-  const rows = await query(
-    `SELECT a.user_id FROM photos p JOIN albums a ON a.id = p.album_id
-     WHERE p.id = ? AND p.is_deleted = 0`, [id]);
   if (!rows.length) return null;
   return rows[0].user_id === userId;
 }

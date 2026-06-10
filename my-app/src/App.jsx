@@ -9,7 +9,6 @@ import Register from "./pages/Register";
 import Home from "./pages/Home";
 import Todos from "./pages/Todos";
 import Posts from "./pages/Posts";
-import Albums from "./pages/Albums";
 import Admin from "./pages/Admin";
 import ProtectedRoute from "./pages/ProtectedRoute";
 
@@ -46,7 +45,6 @@ export default function App() {
         <Route path="info" element={<></>} />
         <Route path="todos" element={<Todos />} />
         <Route path="posts" element={<Posts />} />
-        <Route path="albums" element={<Albums />} />
         <Route path="admin" element={<Admin />} />
       </Route>
 

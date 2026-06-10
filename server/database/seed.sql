@@ -37,28 +37,3 @@ INSERT INTO comments (id, post_id, user_id, name, email, body) VALUES
   ('COM005', 'POST005', 'USR001', 'Hagit Tamir', 'hagit@gmail.com', 'Good luck on your exams!'),
   ('COM006', 'POST006', 'USR002', 'Yael Tamir', 'yael@gmail.com', 'The beach photos are stunning!'),
   ('j5eTvL933wI', 'POST004', 'USR001', 'Hagit Tamir', 'hagit@gmail.com', 'woww!!');
-
-INSERT INTO albums (id, user_id, title) VALUES
-  ('ALB001', 'USR001', 'Trips'),
-  ('ALB002', 'USR001', 'Work'),
-  ('ALB003', 'USR002', 'Crochet'),
-  ('ALB004', 'USR002', 'Baking'),
-  ('ALB005', 'USR003', 'Studies'),
-  ('ALB006', 'USR003', 'Sea');
-
-INSERT INTO photos (id, album_id, title, url, thumbnail_url) VALUES
-  ('PH001', 'ALB003', 'Crochet Dolls', 'https://i.etsystatic.com/8375113/r/il/1ef2bd/3567850704/il_570xN.3567850704_cm4w.jpg', 'https://i.etsystatic.com/8375113/r/il/1ef2bd/3567850704/il_570xN.3567850704_cm4w.jpg'),
-  ('PH002', 'ALB003', 'Amigurumi', 'https://www.supergurumi.com/wp-content/uploads/2022/07/Free-Amigurumi-Crochet-Patterns.jpg', 'https://www.supergurumi.com/wp-content/uploads/2022/07/Free-Amigurumi-Crochet-Patterns.jpg'),
-  ('PH003', 'ALB003', 'Crochet Blanket', 'https://www.hanjancrochet.com/wp-content/uploads/2024/09/chunky-textured-crochet-blanket-pattern.jpg', 'https://www.hanjancrochet.com/wp-content/uploads/2024/09/chunky-textured-crochet-blanket-pattern.jpg'),
-  ('PH004', 'ALB003', 'Crochet Stitches', 'https://www.lanternmoon.com/cdn/shop/articles/7-unusual-crochet-stitches-youve-never-tried-1_1445x.jpg?v=1750491371', 'https://www.lanternmoon.com/cdn/shop/articles/7-unusual-crochet-stitches-youve-never-tried-1_1445x.jpg?v=1750491371'),
-  ('PH005', 'ALB003', 'Flower Pot', 'https://www.sewrella.com/wp-content/uploads/2018/09/flower-pot-1-crop.jpg', 'https://www.sewrella.com/wp-content/uploads/2018/09/flower-pot-1-crop.jpg'),
-  ('PH006', 'ALB003', 'Crochet For Beginners', 'https://cdn.shopify.com/s/files/1/1099/8842/files/how_to_crochet_for_beginners_1.jpg?v=1676998490', 'https://cdn.shopify.com/s/files/1/1099/8842/files/how_to_crochet_for_beginners_1.jpg?v=1676998490'),
-  ('PH007', 'ALB001', 'Mountain View', 'https://images.unsplash.com/photo-1506744038136-46273834b3fb', 'https://images.unsplash.com/photo-1506744038136-46273834b3fb'),
-  ('PH008', 'ALB001', 'Forest', 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e', 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e'),
-  ('PH009', 'ALB002', 'Team Meeting', 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d', 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d'),
-  ('PH010', 'ALB002', 'Office Goals', 'https://images.unsplash.com/photo-1497366754035-f200968a6e72', 'https://images.unsplash.com/photo-1497366754035-f200968a6e72'),
-  ('PH011', 'ALB005', 'Studying', 'https://images.unsplash.com/photo-1523240795612-9a054b0db644', 'https://images.unsplash.com/photo-1523240795612-9a054b0db644'),
-  ('PH012', 'ALB006', 'Sea Waves', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e'),
-  ('6vEvKqoVpDI', 'ALB001', 'hit the road', 'https://www.continental-tires.com/adobe/dynamicmedia/deliver/dm-aid--94dd90a4-8d53-4956-baea-79f0ca09149c/co-straighthighwaymountains-image-en-plt.jpg?quality=85&preferwebp=true', 'https://www.continental-tires.com/adobe/dynamicmedia/deliver/dm-aid--94dd90a4-8d53-4956-baea-79f0ca09149c/co-straighthighwaymountains-image-en-plt.jpg?quality=85&preferwebp=true'),
-  ('FFkdWZNB310', 'ALB004', 'sinamon', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH7JWza4SQapGht6yrnXOduKwMTD6enkQO1Q&s', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH7JWza4SQapGht6yrnXOduKwMTD6enkQO1Q&s'),
-  ('sOHAUnm1xZU', 'ALB004', 'bread', 'https://cohenoven.com/wp-content/uploads/2025/11/%D7%AA%D7%9E%D7%95%D7%A0%D7%94-%D7%A9%D7%9C-WhatsApp%E2%80%8F-2025-10-27-%D7%91%D7%A9%D7%A2%D7%94-09.25.09_a5e708e1.jpg', 'https://cohenoven.com/wp-content/uploads/2025/11/%D7%AA%D7%9E%D7%95%D7%A0%D7%94-%D7%A9%D7%9C-WhatsApp%E2%80%8F-2025-10-27-%D7%91%D7%A9%D7%A2%D7%94-09.25.09_a5e708e1.jpg');

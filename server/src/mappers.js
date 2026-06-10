@@ -43,17 +43,3 @@ export const toTodo = (r) => ({
   title: r.title,
   completed: !!r.completed,
 });
-
-export const toAlbum = (r) => ({
-  userId: r.user_id,
-  id: r.id,
-  title: r.title,
-});
-
-export const toPhoto = (r) => ({
-  albumId: r.album_id,
-  id: r.id,
-  title: r.title,
-  url: r.url,
-  thumbnailUrl: r.thumbnail_url,
-});

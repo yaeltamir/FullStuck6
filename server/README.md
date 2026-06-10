@@ -29,7 +29,7 @@ DB connection can be overridden with env vars:
 
 ```
 database/
-  schema.sql          tables (users, passwords, todos, posts, comments, albums, photos)
+  schema.sql          tables (users, passwords, todos, posts, comments)
   generate_seed.js    reads ../my-app/db.json -> seed.sql (faithful, reproducible)
   seed.sql            the data
   restrict_access.sql least-privilege DB user; restricted grants on `passwords`
@@ -43,11 +43,13 @@ src/
 
 ## Routes (each: GET / · GET /:id · POST / · PUT /:id · DELETE /:id)
 
-`/users` `/posts` `/comments` `/todos` `/albums` `/photos`
+`/users` `/posts` `/comments` `/todos`
 
 Nested (like jsonplaceholder):
-`/posts/:id/comments` · `/albums/:id/photos` ·
-`/users/:id/todos` · `/users/:id/posts` · `/users/:id/albums`
+`/posts/:id/comments` · `/users/:id/todos` · `/users/:id/posts`
+
+Auth: `POST /login`, `POST /register`, `PUT /users/:id/password`,
+`PUT /users/:id/block` (admin only).
 
 Filters via query string: `/todos?userId=USR001&completed=true`,
 `/comments?postId=POST001`, `/users?username=yael`, …
@@ -55,5 +57,8 @@ Filters via query string: `/todos?userId=USR001&completed=true`,
 ## Notes
 
 - Passwords live in a separate `passwords` table and are **never** returned
-  by any route. (Login currently still matches on the `website` field, as the
-  original client did — we can move auth fully server-side in a later step.)
+  by any route. Login is validated server-side (`POST /login`).
+- Responses expose only what's needed: public user views omit email/phone,
+  comments omit the commenter's email. PUT/DELETE return only `{success:true}`.
+- Ownership is enforced server-side: you can only edit/delete your own
+  account, todos, posts and comments.
