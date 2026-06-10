@@ -60,6 +60,12 @@ export async function setBlocked(id, blocked) {
     [blocked ? 1 : 0, id]);
   return r.affectedRows > 0;
 }
+// You may only edit/delete your OWN account (profile).
+export async function ownsUserAccount(id, actorId) {
+  const rows = await query('SELECT id FROM users WHERE id = ? AND is_deleted = 0', [id]);
+  if (!rows.length) return null;
+  return id === actorId;
+}
 // Server-side login: checks the password table + the blocked flag.
 // Returns { status: 'ok' | 'invalid' | 'blocked', user? } – never the password.
 export async function verifyLogin(username, password) {
@@ -175,6 +181,11 @@ export async function deleteTodo(id) {
   const r = await query('UPDATE todos SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
   return r.affectedRows > 0;
 }
+export async function ownsTodo(id, userId) {
+  const rows = await query('SELECT user_id FROM todos WHERE id = ? AND is_deleted = 0', [id]);
+  if (!rows.length) return null;
+  return rows[0].user_id === userId;
+}
 
 // ---------- ALBUMS ----------
 export async function getAlbums(filters = {}) {
@@ -208,6 +219,11 @@ export async function deleteAlbum(id) {
   if (r.affectedRows) await query('UPDATE photos SET is_deleted = 1 WHERE album_id = ?', [id]);
   return r.affectedRows > 0;
 }
+export async function ownsAlbum(id, userId) {
+  const rows = await query('SELECT user_id FROM albums WHERE id = ? AND is_deleted = 0', [id]);
+  if (!rows.length) return null;
+  return rows[0].user_id === userId;
+}
 
 // ---------- PHOTOS ----------
 export async function getPhotos(filters = {}) {
@@ -236,4 +252,12 @@ export async function updatePhoto(id, d) {
 export async function deletePhoto(id) {
   const r = await query('UPDATE photos SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
   return r.affectedRows > 0;
+}
+// A photo belongs to whoever owns its album.
+export async function ownsPhoto(id, userId) {
+  const rows = await query(
+    `SELECT a.user_id FROM photos p JOIN albums a ON a.id = p.album_id
+     WHERE p.id = ? AND p.is_deleted = 0`, [id]);
+  if (!rows.length) return null;
+  return rows[0].user_id === userId;
 }

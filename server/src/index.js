@@ -88,7 +88,7 @@ app.post('/register', async (req, res, next) => {
 // ---- USERS (+ nested todos / posts / albums) ----
 const users = resource({
   list: q.getUsers, getById: q.getUserById, create: q.createUser,
-  update: q.updateUser, remove: q.deleteUser,
+  update: q.updateUser, remove: q.deleteUser, owns: q.ownsUserAccount,
 });
 users.get('/:id/todos',  async (req, res, next) => { try { res.json(await q.getTodos({ userId: req.params.id })); } catch (e) { next(e); } });
 users.get('/:id/posts',  async (req, res, next) => { try { res.json(await q.getPosts({ userId: req.params.id })); } catch (e) { next(e); } });
@@ -138,13 +138,13 @@ app.use('/comments', resource({
 // ---- TODOS ----
 app.use('/todos', resource({
   list: q.getTodos, getById: q.getTodoById, create: q.createTodo,
-  update: q.updateTodo, remove: q.deleteTodo,
+  update: q.updateTodo, remove: q.deleteTodo, owns: q.ownsTodo,
 }));
 
 // ---- ALBUMS (+ nested photos) ----
 const albums = resource({
   list: q.getAlbums, getById: q.getAlbumById, create: q.createAlbum,
-  update: q.updateAlbum, remove: q.deleteAlbum,
+  update: q.updateAlbum, remove: q.deleteAlbum, owns: q.ownsAlbum,
 });
 albums.get('/:id/photos', async (req, res, next) => { try { res.json(await q.getAlbumPhotos(req.params.id)); } catch (e) { next(e); } });
 app.use('/albums', albums);
@@ -152,7 +152,7 @@ app.use('/albums', albums);
 // ---- PHOTOS ----
 app.use('/photos', resource({
   list: q.getPhotos, getById: q.getPhotoById, create: q.createPhoto,
-  update: q.updatePhoto, remove: q.deletePhoto,
+  update: q.updatePhoto, remove: q.deletePhoto, owns: q.ownsPhoto,
 }));
 
 // 404 + error handler
