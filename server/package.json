@@ -1,0 +1,16 @@
+{
+  "name": "fullstack6-server",
+  "version": "1.0.0",
+  "description": "Express + MySQL REST API (jsonplaceholder-style) for project 6",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node --watch src/index.js",
+    "test:db": "node src/test_queries.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "mysql2": "^3.11.0"
+  }
+}
