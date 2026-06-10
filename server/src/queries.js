@@ -7,7 +7,7 @@
 //  is_deleted=1 instead of removing the row.
 // ============================================================
 import { query, nextId, buildFilter } from './db.js';
-import { toUser, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
+import { toUser, toUserPrivate, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
 
 // ---------- USERS (no password ever returned) ----------
 export async function getUsers(filters = {}) {
@@ -25,7 +25,8 @@ export async function createUser(d) {
     'INSERT INTO users (id, username, name, email, phone, website) VALUES (?,?,?,?,?,?)',
     [id, d.username, d.name, d.email, d.phone ?? null, d.website ?? null]);
   if (d.password) await query('INSERT INTO passwords (user_id, password) VALUES (?,?)', [id, d.password]);
-  return getUserById(id);
+  const rows = await query('SELECT * FROM users WHERE id = ?', [id]);
+  return toUserPrivate(rows[0]);   // the new user gets their own (private) view
 }
 export async function updateUser(id, d) {
   const cur = (await query('SELECT * FROM users WHERE id = ? AND is_deleted = 0', [id]))[0];
@@ -68,7 +69,7 @@ export async function verifyLogin(username, password) {
   if (user.is_blocked) return { status: 'blocked' };
   const creds = await query('SELECT password FROM passwords WHERE user_id = ?', [user.id]);
   if (!creds.length || creds[0].password !== password) return { status: 'invalid' };
-  return { status: 'ok', user: toUser(user) };
+  return { status: 'ok', user: toUserPrivate(user) };   // your own (private) view
 }
 
 // ---------- POSTS ----------
