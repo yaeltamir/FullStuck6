@@ -75,6 +75,15 @@ const BASE_URL = "http://localhost:3000";
 
 const cache = {};
 
+// Tell the server who the active user is, so it can enforce ownership
+// (a user may only edit/delete their own posts & comments).
+function authHeaders() {
+  const u = JSON.parse(
+    localStorage.getItem("currentUser") || "null"
+  );
+  return u ? { "x-user-id": u.id } : {};
+}
+
 export async function apiGet(endpoint) {
 
   if (cache[endpoint]) {
@@ -105,6 +114,7 @@ export async function apiPost(endpoint, body) {
 
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(),
       },
 
       body: JSON.stringify(body),
@@ -112,7 +122,8 @@ export async function apiPost(endpoint, body) {
   );
 
   if (!response.ok) {
-    throw new Error("POST failed");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || "POST failed");
   }
 
   Object.keys(cache).forEach((key) => {
@@ -134,6 +145,7 @@ export async function apiPut(endpoint, body) {
 
       headers: {
         "Content-Type": "application/json",
+        ...authHeaders(),
       },
 
       body: JSON.stringify(body),
@@ -141,7 +153,8 @@ export async function apiPut(endpoint, body) {
   );
 
   if (!response.ok) {
-    throw new Error("PUT failed");
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || "PUT failed");
   }
 
   Object.keys(cache).forEach((key) => {
@@ -160,6 +173,9 @@ export async function apiDelete(endpoint) {
     `${BASE_URL}${endpoint}`,
     {
       method: "DELETE",
+      headers: {
+        ...authHeaders(),
+      },
     }
   );
 

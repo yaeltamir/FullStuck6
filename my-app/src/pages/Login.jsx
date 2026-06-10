@@ -5,7 +5,7 @@ import {
   Link,
 } from "react-router-dom";
 
-import { apiGet }
+import { apiPost }
 from "../api/api";
 
 export default function Login() {
@@ -49,39 +49,24 @@ export default function Login() {
 
     try {
 
-      const users = await apiGet(
-        `/users?username=${username}`
+      // The SERVER validates the password (against the passwords table)
+      // and whether the account is blocked. It never sends the password.
+      const foundUser = await apiPost(
+        "/login",
+        { username, password }
       );
-
-      const foundUser = users[0];
-
-      if (
-        !foundUser ||
-        (
-          foundUser.password !== password &&
-          foundUser.website !== password
-        )
-      ) {
-
-        setError(
-          "Invalid username or password"
-        );
-
-        return;
-      }
 
       localStorage.setItem(
         "currentUser",
         JSON.stringify(foundUser)
       );
 
-      navigate("/home");
+      navigate(`/users/${foundUser.username}/todos`);
 
-    } catch {
+    } catch (err) {
 
-      setError(
-        "Login failed"
-      );
+      // Server message: "Invalid username or password" / "This account is blocked"
+      setError(err.message);
     }
   }
 

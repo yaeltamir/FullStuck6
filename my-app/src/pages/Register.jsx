@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 
 import {
-  apiGet,
   apiPost,
 } from "../api/api";
 
@@ -75,26 +74,8 @@ export default function Register() {
       return;
     }
 
-    const serverUsers =
-      await apiGet("/users");
-
-    const exists =
-      serverUsers.some(
-        (u) =>
-          u.username
-            .toLowerCase() ===
-          username.toLowerCase()
-      );
-
-    if (exists) {
-
-      setError(
-        "Username already exists"
-      );
-
-      return;
-    }
-
+    // No need to download all users — the server checks for a duplicate
+    // username when we submit (step 2). Here we only validate locally.
     setStep(2);
   }
 
@@ -127,44 +108,31 @@ export default function Register() {
       return;
     }
 
-    const newUser = {
+    try {
 
-      id: Date.now(),
+      // Server creates the user + password and checks for duplicates.
+      // website is left empty so the password is never stored in a visible field.
+      const savedUser = await apiPost("/register", {
+        username,
+        password,
+        name,
+        email,
+        phone,
+        website: "",
+      });
 
-      username,
-
-      password,
-
-      website: password,
-
-      name,
-
-      email,
-
-      phone,
-
-      address: {
-        street: "",
-        city: "",
-      },
-
-      company: {
-        name: "",
-      },
-    };
-
-    const savedUser =
-      await apiPost(
-        "/users",
-        newUser
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(savedUser)
       );
 
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(savedUser)
-    );
+      navigate(`/users/${savedUser.username}/todos`);
 
-    navigate("/home");
+    } catch (err) {
+      // e.g. "Username already exists" — go back to step 1 to change it.
+      setError(err.message);
+      setStep(1);
+    }
   }
 
   return (

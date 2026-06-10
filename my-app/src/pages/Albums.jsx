@@ -171,9 +171,7 @@ export default function Albums() {
     if (editingAlbum) {
 
       const updatedAlbum = {
-
         ...editingAlbum,
-
         title: albumTitle,
       };
 
@@ -182,18 +180,24 @@ export default function Albums() {
         updatedAlbum
       );
 
+      setAlbums((prev) =>
+        prev.map((a) =>
+          a.id === editingAlbum.id ? updatedAlbum : a
+        )
+      );
+
     } else {
 
-      await apiPost(
+      const created = await apiPost(
         "/albums",
         {
           userId: currentUser.id,
           title: albumTitle,
         }
       );
-    }
 
-    await loadAlbums();
+      setAlbums((prev) => [...prev, created]);
+    }
 
     setShowAlbumModal(false);
 
@@ -229,19 +233,7 @@ export default function Albums() {
   // }
   async function deleteAlbum(id) {
 
-    const albumPhotos =
-      await apiGet(
-        `/photos?albumId=${id}`
-      );
-
-    await Promise.all(
-      albumPhotos.map((photo) =>
-        apiDelete(
-          `/photos/${photo.id}`
-        )
-      )
-    );
-
+    // the server soft-deletes the album AND its photos (cascade) — one call.
     await apiDelete(
       `/albums/${id}`
     );
@@ -328,15 +320,10 @@ export default function Albums() {
     if (editingPhoto) {
 
       const updatedPhoto = {
-
         ...editingPhoto,
-
         title: photoTitle,
-
         url: photoUrl,
-
-        thumbnailUrl:
-          photoUrl,
+        thumbnailUrl: photoUrl,
       };
 
       await apiPut(
@@ -344,27 +331,26 @@ export default function Albums() {
         updatedPhoto
       );
 
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === editingPhoto.id ? updatedPhoto : p
+        )
+      );
+
     } else {
 
-      await apiPost(
+      const created = await apiPost(
         "/photos",
         {
-          albumId:
-            selectedAlbum.id,
-
+          albumId: selectedAlbum.id,
           title: photoTitle,
-
           url: photoUrl,
-
-          thumbnailUrl:
-            photoUrl,
+          thumbnailUrl: photoUrl,
         }
       );
-    }
 
-    await selectAlbum(
-      selectedAlbum
-    );
+      setPhotos((prev) => [...prev, created]);
+    }
 
     setShowPhotoModal(false);
 

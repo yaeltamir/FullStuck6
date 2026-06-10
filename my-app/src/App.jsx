@@ -10,8 +10,8 @@ import Home from "./pages/Home";
 import Todos from "./pages/Todos";
 import Posts from "./pages/Posts";
 import Albums from "./pages/Albums";
+import Admin from "./pages/Admin";
 import ProtectedRoute from "./pages/ProtectedRoute";
-// import Info from "./pages/Info";
 
 export default function App() {
 
@@ -33,58 +33,27 @@ export default function App() {
         element={<Register />}
       />
 
+      {/* App pages – informative internal URLs: /users/:username/... */}
       <Route
-        path="/home"
+        path="/users/:username"
         element={
           <ProtectedRoute>
             <Home />
           </ProtectedRoute>
         }
       >
-{/* 
-        <Route
-          index
-          element={
-            <h2>
-              Welcome to your dashboard
-            </h2>
-          }
-        /> */}
-
+        <Route index element={<Navigate to="info" replace />} />
+        <Route path="info" element={<></>} />
+        <Route path="todos" element={<Todos />} />
+        <Route path="posts" element={<Posts />} />
+        <Route path="albums" element={<Albums />} />
+        <Route path="admin" element={<Admin />} />
       </Route>
 
       <Route
-        path="/todos"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Todos />} />
-      </Route>
-
-      <Route
-        path="/posts"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Posts />} />
-      </Route>
-
-      <Route
-        path="/albums"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<Albums />} />
-      </Route>
+        path="*"
+        element={<Navigate to="/login" replace />}
+      />
 
     </Routes>
   );

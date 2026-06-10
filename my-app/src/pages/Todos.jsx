@@ -277,7 +277,9 @@ export default function Todos() {
           );
         }
 
-        return a.id - b.id;
+        return String(a.id).localeCompare(
+          String(b.id)
+        );
       });
 
   return (

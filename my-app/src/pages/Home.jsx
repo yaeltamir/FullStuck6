@@ -48,6 +48,26 @@ export default function Home() {
     setPhone] =
     useState("");
 
+  // ======================
+  // CHANGE PASSWORD MODAL
+  // ======================
+
+  const [showPasswordModal,
+    setShowPasswordModal] =
+    useState(false);
+
+  const [currentPassword,
+    setCurrentPassword] =
+    useState("");
+
+  const [newPassword,
+    setNewPassword] =
+    useState("");
+
+  const [passwordMsg,
+    setPasswordMsg] =
+    useState("");
+
   useEffect(() => {
 
     const savedUser =
@@ -152,6 +172,39 @@ export default function Home() {
     setShowProfileModal(false);
   }
 
+  // ======================
+  // CHANGE PASSWORD
+  // ======================
+
+  async function changePassword() {
+
+    setPasswordMsg("");
+
+    if (
+      !currentPassword.trim() ||
+      !newPassword.trim()
+    ) {
+      setPasswordMsg("Fill both fields");
+      return;
+    }
+
+    try {
+
+      await apiPut(
+        `/users/${user.id}/password`,
+        { currentPassword, newPassword }
+      );
+
+      setPasswordMsg("Password changed successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+
+    } catch (err) {
+      // server message, e.g. "Current password is incorrect"
+      setPasswordMsg(err.message);
+    }
+  }
+
   if (!user) return null;
 
   return (
@@ -167,20 +220,20 @@ export default function Home() {
         </h2>
 
         <Link
-          to="/home"
+          to={`/users/${user.username}/info`}
           className={
-            location.pathname === "/home"
+            location.pathname.endsWith("/info")
               ? "active-link"
               : ""
           }
         >
-          Home
+          Info
         </Link>
 
         <Link
-          to="/todos"
+          to={`/users/${user.username}/todos`}
           className={
-            location.pathname === "/todos"
+            location.pathname.endsWith("/todos")
               ? "active-link"
               : ""
           }
@@ -189,9 +242,9 @@ export default function Home() {
         </Link>
 
         <Link
-          to="/posts"
+          to={`/users/${user.username}/posts`}
           className={
-            location.pathname === "/posts"
+            location.pathname.endsWith("/posts")
               ? "active-link"
               : ""
           }
@@ -200,15 +253,28 @@ export default function Home() {
         </Link>
 
         <Link
-          to="/albums"
+          to={`/users/${user.username}/albums`}
           className={
-            location.pathname === "/albums"
+            location.pathname.endsWith("/albums")
               ? "active-link"
               : ""
           }
         >
           Albums
         </Link>
+
+        {user.role === "admin" && (
+          <Link
+            to={`/users/${user.username}/admin`}
+            className={
+              location.pathname.endsWith("/admin")
+                ? "active-link"
+                : ""
+            }
+          >
+            Admin
+          </Link>
+        )}
 
        <button
           className="btn-danger logout-btn"
@@ -227,8 +293,8 @@ export default function Home() {
           Welcome {user.name}
         </h1>
 
-        {location.pathname ===
-          "/home" && (
+        {location.pathname.endsWith(
+          "/info") && (
 
           <>
 
@@ -271,6 +337,17 @@ export default function Home() {
                 onClick={editUser}
               >
                 Edit Profile
+              </button>
+
+              <button
+                onClick={() => {
+                  setPasswordMsg("");
+                  setCurrentPassword("");
+                  setNewPassword("");
+                  setShowPasswordModal(true);
+                }}
+              >
+                Change Password
               </button>
 
             </div>
@@ -341,6 +418,57 @@ export default function Home() {
 
         <button
           onClick={saveProfile}
+        >
+          Save
+        </button>
+
+      </Modal>
+
+      {/* ====================== */}
+      {/* CHANGE PASSWORD MODAL */}
+      {/* ====================== */}
+
+      <Modal
+        isOpen={showPasswordModal}
+        onClose={() =>
+          setShowPasswordModal(false)
+        }
+      >
+
+        <h2>
+          Change Password
+        </h2>
+
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={(e) =>
+            setCurrentPassword(e.target.value)
+          }
+          placeholder="Current password"
+        />
+
+        <br />
+        <br />
+
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) =>
+            setNewPassword(e.target.value)
+          }
+          placeholder="New password"
+        />
+
+        <br />
+        <br />
+
+        {passwordMsg && (
+          <p>{passwordMsg}</p>
+        )}
+
+        <button
+          onClick={changePassword}
         >
           Save
         </button>

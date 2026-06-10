@@ -103,9 +103,13 @@ export default function Posts() {
 
     setSelectedPost(post);
 
-    const owner = await apiGet(`/users?id=${post.userId}`);
-
-    setPostOwner(owner[0]);
+    // We already know the owner of our own posts — no need to ask the server.
+    if (post.userId === currentUser.id) {
+      setPostOwner(currentUser);
+    } else {
+      const owner = await apiGet(`/users?id=${post.userId}`);
+      setPostOwner(owner[0]);
+    }
 
     const data = await apiGet(
       `/comments?postId=${post.id}`
@@ -160,11 +164,8 @@ export default function Posts() {
     if (editingPost) {
 
       const updatedPost = {
-
         ...editingPost,
-
         title: postTitle,
-
         body: postBody,
       };
 
@@ -173,9 +174,16 @@ export default function Posts() {
         updatedPost
       );
 
+      // update locally instead of re-fetching the whole list
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === editingPost.id ? updatedPost : p
+        )
+      );
+
     } else {
 
-      await apiPost(
+      const created = await apiPost(
         "/posts",
         {
           userId: currentUser.id,
@@ -183,9 +191,10 @@ export default function Posts() {
           body: postBody,
         }
       );
-    }
 
-    await loadPosts();
+      // append the new post (the server gave us its id)
+      setPosts((prev) => [created, ...prev]);
+    }
 
     setShowPostModal(false);
 
@@ -223,18 +232,8 @@ export default function Posts() {
   // }
   async function deletePost(id) {
 
-    const comments = await apiGet(
-      `/comments?postId=${id}`
-    );
-
-    await Promise.all(
-      comments.map((comment) =>
-        apiDelete(
-          `/comments/${comment.id}`
-        )
-      )
-    );
-
+    // The server soft-deletes the post AND its comments (cascade),
+    // so the client doesn't touch other users' comments.
     await apiDelete(
       `/posts/${id}`
     );
@@ -286,16 +285,15 @@ export default function Posts() {
         newComment,
     };
 
-    await apiPost(
+    const created = await apiPost(
       "/comments",
       comment
     );
 
-    setNewComment("");
+    // add the new comment locally (no need to re-fetch them all)
+    setComments((prev) => [...prev, created]);
 
-    await selectPost(
-      selectedPost
-    );
+    setNewComment("");
   }
 
   // ======================
@@ -332,9 +330,7 @@ export default function Posts() {
     }
 
     const updatedComment = {
-
       ...editingComment,
-
       body: commentBody,
     };
 
@@ -343,8 +339,11 @@ export default function Posts() {
       updatedComment
     );
 
-    await selectPost(
-      selectedPost
+    // update the comment locally instead of re-fetching
+    setComments((prev) =>
+      prev.map((c) =>
+        c.id === editingComment.id ? updatedComment : c
+      )
     );
 
     setShowCommentModal(
