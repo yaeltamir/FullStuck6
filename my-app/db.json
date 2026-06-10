@@ -1,0 +1,317 @@
+{
+  "users": [
+    {
+      "id": "USR001",
+      "username": "hagit",
+      "password": "040562910",
+      "website": "040562910",
+      "name": "Hagit Tamir",
+      "email": "hagit@gmail.com",
+      "phone": "0507594941"
+    },
+    {
+      "id": "USR002",
+      "username": "yael",
+      "password": "214654121",
+      "website": "214654121",
+      "name": "Yael Tamir",
+      "email": "yael@gmail.com",
+      "phone": "0549024970"
+    },
+    {
+      "id": "USR003",
+      "username": "hadas",
+      "password": "12345678",
+      "website": "12345678",
+      "name": "Hadas Levi",
+      "email": "hadas@gmail.com",
+      "phone": "0521112233"
+    }
+  ],
+  "todos": [
+    {
+      "userId": "USR001",
+      "title": "Prepare learning presentation",
+      "completed": false,
+      "id": "TD001"
+    },
+    {
+      "userId": "USR001",
+      "title": "Upload project files",
+      "completed": true,
+      "id": "TD002"
+    },
+    {
+      "userId": "USR001",
+      "title": "Plan northern trip",
+      "completed": false,
+      "id": "TD003"
+    },
+    {
+      "userId": "USR002",
+      "title": "Buy new yarn",
+      "completed": false,
+      "id": "TD004"
+    },
+    {
+      "userId": "USR002",
+      "title": "Finish crochet blanket",
+      "completed": true,
+      "id": "TD005"
+    },
+    {
+      "userId": "USR002",
+      "title": "Bake cinnamon cake",
+      "completed": false,
+      "id": "TD006"
+    },
+    {
+      "userId": "USR003",
+      "title": "Study for database exam",
+      "completed": false,
+      "id": "TD007"
+    },
+    {
+      "userId": "USR003",
+      "title": "Go to the beach",
+      "completed": true,
+      "id": "TD008"
+    }
+  ],
+  "posts": [
+    {
+      "userId": "USR001",
+      "title": "New Learning Project",
+      "body": "Started working on a new knowledge management and learning project this week!",
+      "id": "POST001"
+    },
+    {
+      "userId": "USR001",
+      "title": "Weekend Trip",
+      "body": "Spent the weekend in the north. The views were absolutely amazing.",
+      "id": "POST002"
+    },
+    {
+      "userId": "USR002",
+      "title": "My Crochet Journey",
+      "body": "Crochet became my favorite hobby this year. I started with small dolls and now I make blankets too!",
+      "id": "POST003"
+    },
+    {
+      "userId": "USR002",
+      "title": "Weekend Baking",
+      "body": "Tried a new cinnamon cake recipe today and it turned out amazing!",
+      "id": "POST004"
+    },
+    {
+      "userId": "USR003",
+      "title": "Exam Week",
+      "body": "Trying to survive finals week with coffee and motivation 😅",
+      "id": "POST005"
+    },
+    {
+      "userId": "USR003",
+      "title": "Beach Therapy",
+      "body": "Nothing relaxes me more than the sound of the sea.",
+      "id": "POST006"
+    }
+  ],
+  "comments": [
+    {
+      "postId": "POST001",
+      "userId": "USR002",
+      "name": "Yael Tamir",
+      "email": "yael@gmail.com",
+      "body": "Good luck with the new project!",
+      "id": "COM001"
+    },
+    {
+      "postId": "POST001",
+      "userId": "USR003",
+      "name": "Hadas Levi",
+      "email": "hadas@gmail.com",
+      "body": "Sounds really interesting!",
+      "id": "COM002"
+    },
+    {
+      "postId": "POST003",
+      "userId": "USR001",
+      "name": "Hagit Tamir",
+      "email": "hagit@gmail.com",
+      "body": "The crochet work looks amazing!!",
+      "id": "COM003"
+    },
+    {
+      "postId": "POST004",
+      "userId": "USR003",
+      "name": "Hadas Levi",
+      "email": "hadas@gmail.com",
+      "body": "The cake looks delicious 😍",
+      "id": "COM004"
+    },
+    {
+      "postId": "POST005",
+      "userId": "USR001",
+      "name": "Hagit Tamir",
+      "email": "hagit@gmail.com",
+      "body": "Good luck on your exams!",
+      "id": "COM005"
+    },
+    {
+      "postId": "POST006",
+      "userId": "USR002",
+      "name": "Yael Tamir",
+      "email": "yael@gmail.com",
+      "body": "The beach photos are stunning!",
+      "id": "COM006"
+    },
+    {
+      "postId": "POST004",
+      "userId": "USR001",
+      "name": "Hagit Tamir",
+      "email": "hagit@gmail.com",
+      "body": "woww!!",
+      "id": "j5eTvL933wI"
+    }
+  ],
+  "albums": [
+    {
+      "userId": "USR001",
+      "title": "Trips",
+      "id": "ALB001"
+    },
+    {
+      "userId": "USR001",
+      "title": "Work",
+      "id": "ALB002"
+    },
+    {
+      "userId": "USR002",
+      "title": "Crochet",
+      "id": "ALB003"
+    },
+    {
+      "userId": "USR002",
+      "title": "Baking",
+      "id": "ALB004"
+    },
+    {
+      "userId": "USR003",
+      "title": "Studies",
+      "id": "ALB005"
+    },
+    {
+      "userId": "USR003",
+      "title": "Sea",
+      "id": "ALB006"
+    }
+  ],
+  "photos": [
+    {
+      "albumId": "ALB003",
+      "title": "Crochet Dolls",
+      "url": "https://i.etsystatic.com/8375113/r/il/1ef2bd/3567850704/il_570xN.3567850704_cm4w.jpg",
+      "thumbnailUrl": "https://i.etsystatic.com/8375113/r/il/1ef2bd/3567850704/il_570xN.3567850704_cm4w.jpg",
+      "id": "PH001"
+    },
+    {
+      "albumId": "ALB003",
+      "title": "Amigurumi",
+      "url": "https://www.supergurumi.com/wp-content/uploads/2022/07/Free-Amigurumi-Crochet-Patterns.jpg",
+      "thumbnailUrl": "https://www.supergurumi.com/wp-content/uploads/2022/07/Free-Amigurumi-Crochet-Patterns.jpg",
+      "id": "PH002"
+    },
+    {
+      "albumId": "ALB003",
+      "title": "Crochet Blanket",
+      "url": "https://www.hanjancrochet.com/wp-content/uploads/2024/09/chunky-textured-crochet-blanket-pattern.jpg",
+      "thumbnailUrl": "https://www.hanjancrochet.com/wp-content/uploads/2024/09/chunky-textured-crochet-blanket-pattern.jpg",
+      "id": "PH003"
+    },
+    {
+      "albumId": "ALB003",
+      "title": "Crochet Stitches",
+      "url": "https://www.lanternmoon.com/cdn/shop/articles/7-unusual-crochet-stitches-youve-never-tried-1_1445x.jpg?v=1750491371",
+      "thumbnailUrl": "https://www.lanternmoon.com/cdn/shop/articles/7-unusual-crochet-stitches-youve-never-tried-1_1445x.jpg?v=1750491371",
+      "id": "PH004"
+    },
+    {
+      "albumId": "ALB003",
+      "title": "Flower Pot",
+      "url": "https://www.sewrella.com/wp-content/uploads/2018/09/flower-pot-1-crop.jpg",
+      "thumbnailUrl": "https://www.sewrella.com/wp-content/uploads/2018/09/flower-pot-1-crop.jpg",
+      "id": "PH005"
+    },
+    {
+      "albumId": "ALB003",
+      "title": "Crochet For Beginners",
+      "url": "https://cdn.shopify.com/s/files/1/1099/8842/files/how_to_crochet_for_beginners_1.jpg?v=1676998490",
+      "thumbnailUrl": "https://cdn.shopify.com/s/files/1/1099/8842/files/how_to_crochet_for_beginners_1.jpg?v=1676998490",
+      "id": "PH006"
+    },
+    {
+      "albumId": "ALB001",
+      "title": "Mountain View",
+      "url": "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
+      "id": "PH007"
+    },
+    {
+      "albumId": "ALB001",
+      "title": "Forest",
+      "url": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1441974231531-c6227db76b6e",
+      "id": "PH008"
+    },
+    {
+      "albumId": "ALB002",
+      "title": "Team Meeting",
+      "url": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1521737604893-d14cc237f11d",
+      "id": "PH009"
+    },
+    {
+      "albumId": "ALB002",
+      "title": "Office Goals",
+      "url": "https://images.unsplash.com/photo-1497366754035-f200968a6e72",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72",
+      "id": "PH010"
+    },
+    {
+      "albumId": "ALB005",
+      "title": "Studying",
+      "url": "https://images.unsplash.com/photo-1523240795612-9a054b0db644",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1523240795612-9a054b0db644",
+      "id": "PH011"
+    },
+    {
+      "albumId": "ALB006",
+      "title": "Sea Waves",
+      "url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+      "id": "PH012"
+    },
+    {
+      "albumId": "ALB001",
+      "title": "hit the road",
+      "url": "https://www.continental-tires.com/adobe/dynamicmedia/deliver/dm-aid--94dd90a4-8d53-4956-baea-79f0ca09149c/co-straighthighwaymountains-image-en-plt.jpg?quality=85&preferwebp=true",
+      "thumbnailUrl": "https://www.continental-tires.com/adobe/dynamicmedia/deliver/dm-aid--94dd90a4-8d53-4956-baea-79f0ca09149c/co-straighthighwaymountains-image-en-plt.jpg?quality=85&preferwebp=true",
+      "id": "6vEvKqoVpDI"
+    },
+    {
+      "albumId": "ALB004",
+      "title": "sinamon",
+      "url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH7JWza4SQapGht6yrnXOduKwMTD6enkQO1Q&s",
+      "thumbnailUrl": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSH7JWza4SQapGht6yrnXOduKwMTD6enkQO1Q&s",
+      "id": "FFkdWZNB310"
+    },
+    {
+      "albumId": "ALB004",
+      "title": "bread",
+      "url": "https://cohenoven.com/wp-content/uploads/2025/11/%D7%AA%D7%9E%D7%95%D7%A0%D7%94-%D7%A9%D7%9C-WhatsApp%E2%80%8F-2025-10-27-%D7%91%D7%A9%D7%A2%D7%94-09.25.09_a5e708e1.jpg",
+      "thumbnailUrl": "https://cohenoven.com/wp-content/uploads/2025/11/%D7%AA%D7%9E%D7%95%D7%A0%D7%94-%D7%A9%D7%9C-WhatsApp%E2%80%8F-2025-10-27-%D7%91%D7%A9%D7%A2%D7%94-09.25.09_a5e708e1.jpg",
+      "id": "sOHAUnm1xZU"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

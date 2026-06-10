@@ -1,0 +1,609 @@
+/* =========================================
+   ROOT VARIABLES
+========================================= */
+
+:root {
+
+  /* COLORS */
+  --bg-main: #f3f6fb;
+  --bg-card: #ffffff;
+
+  --sidebar-bg: #0f172a;
+  --sidebar-hover: rgba(255,255,255,0.08);
+  --sidebar-active: rgba(96,165,250,0.18);
+
+  --text-main: #1e293b;
+  --text-light: #dbeafe;
+
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+
+  --secondary: #64748b;
+  --secondary-hover: #475569;
+
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+
+  --border: #d6dce5;
+
+  --shadow:
+    0 10px 30px rgba(0,0,0,0.08);
+
+  --radius: 20px;
+
+  --transition: 0.22s;
+}
+
+/* =========================================
+   GLOBAL
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: "Segoe UI", sans-serif;
+}
+
+a {
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* =========================================
+   PAGE CENTER
+========================================= */
+
+.page {
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 30px;
+}
+
+/* =========================================
+   CARD
+========================================= */
+
+.card {
+  background: var(--bg-card);
+
+  border-radius: var(--radius);
+
+  padding: 28px;
+
+  box-shadow: var(--shadow);
+
+  transition: var(--transition);
+
+  margin-bottom: 20px;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+.page .card {
+  width: 100%;
+  max-width: 520px;
+}
+
+/* =========================================
+   INPUTS
+========================================= */
+
+input,
+textarea,
+select {
+  width: 100%;
+
+  padding: 14px;
+
+  margin-top: 10px;
+  margin-bottom: 16px;
+
+  border-radius: 14px;
+
+  border: 1px solid var(--border);
+
+  background: #f9fbfd;
+
+  font-size: 15px;
+
+  transition: var(--transition);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+
+  outline: none;
+
+  border-color: var(--primary);
+
+  background: white;
+
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,0.12);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+/* =========================================
+   BUTTONS
+========================================= */
+
+button {
+  border: none;
+
+  border-radius: 14px;
+
+  padding: 10px 18px;
+
+  cursor: pointer;
+
+  background: var(--primary);
+
+  color: white;
+
+  font-weight: 600;
+
+  transition: var(--transition);
+
+  margin-right: 8px;
+}
+
+button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* =========================================
+   BUTTON TYPES
+========================================= */
+
+.btn-secondary {
+  background: var(--secondary);
+}
+
+.btn-secondary:hover {
+  background: var(--secondary-hover);
+}
+
+.btn-danger {
+  background: var(--danger);
+}
+
+.btn-danger:hover {
+  background: var(--danger-hover);
+}
+
+/* =========================================
+   LAYOUT
+========================================= */
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* =========================================
+   SIDEBAR
+========================================= */
+
+.sidebar {
+
+  width: 250px;
+
+  height: 100vh;
+
+  position: fixed;
+
+  top: 0;
+  left: 0;
+
+  background: var(--sidebar-bg);
+
+  color: white;
+
+  padding: 30px 18px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 14px;
+
+  overflow-y: auto;
+}
+
+.sidebar h2 {
+
+  font-size: 28px;
+
+  margin-bottom: 25px;
+
+  color: #60a5fa;
+}
+
+.sidebar a {
+
+  color: var(--text-light);
+
+  padding: 14px;
+
+  border-radius: 14px;
+
+  transition: var(--transition);
+
+  font-size: 18px;
+}
+
+.sidebar a:hover {
+  background: var(--sidebar-hover);
+}
+
+.sidebar .active-link {
+
+  background: var(--sidebar-active);
+
+  border-left: 4px solid #60a5fa;
+
+  font-weight: 700;
+
+  color: white;
+}
+
+.logout-btn {
+  margin-top: auto;
+  width: 100%;
+}
+
+/* =========================================
+   CONTENT
+========================================= */
+
+.content {
+
+  flex: 1;
+
+  margin-left: 250px;
+
+  padding: 40px;
+
+  min-height: 100vh;
+}
+
+.content h1 {
+
+  margin-top: 0;
+
+  font-size: 52px;
+
+  margin-bottom: 10px;
+}
+
+.content h2 {
+
+  font-size: 28px;
+
+  margin-top: 30px;
+}
+
+/* =========================================
+   SEARCH + FILTER AREA
+========================================= */
+
+.filters {
+  margin-bottom: 24px;
+}
+
+/* =========================================
+   ITEM ROW
+   POSTS + ALBUMS
+========================================= */
+
+.item-row {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  gap: 20px;
+}
+
+.item-actions {
+
+  display: flex;
+
+  gap: 10px;
+}
+
+.item-title-btn {
+
+  background: transparent;
+
+  color: var(--text-main);
+
+  padding: 0;
+
+  font-size: 20px;
+
+  font-weight: 700;
+}
+
+.item-title-btn:hover {
+
+  background: transparent;
+
+  color: var(--primary);
+
+  transform: none;
+}
+
+/* =========================================
+   TODOS
+========================================= */
+
+.todo-card {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  padding: 22px 26px;
+}
+
+.todo-left {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+}
+
+.todo-actions {
+
+  display: flex;
+
+  gap: 10px;
+}
+
+.todo-title {
+  font-size: 19px;
+}
+
+.todo-checkbox {
+
+  width: 18px;
+
+  height: 18px;
+
+  cursor: pointer;
+}
+
+/* =========================================
+   PHOTO GRID
+========================================= */
+
+.photos-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(240px, 1fr));
+
+  gap: 24px;
+
+  margin-top: 30px;
+}
+
+.photo-card {
+
+  background: white;
+
+  border-radius: 18px;
+
+  overflow: hidden;
+
+  box-shadow: var(--shadow);
+
+  transition: var(--transition);
+}
+
+.photo-card:hover {
+  transform: translateY(-4px);
+}
+
+.photo-card img {
+
+  width: 100%;
+
+  height: 220px;
+
+  object-fit: cover;
+
+  display: block;
+}
+
+.photo-card p {
+
+  padding: 14px;
+
+  font-weight: 600;
+}
+
+/* =========================================
+   MODAL
+========================================= */
+
+.modal-overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: rgba(0,0,0,0.55);
+
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  z-index: 999;
+
+  padding: 20px;
+}
+
+.modal-content {
+
+  background: white;
+
+  border-radius: 24px;
+
+  padding: 32px;
+
+  width: 100%;
+  max-width: 560px;
+
+  position: relative;
+
+  animation: popup 0.2s ease;
+}
+
+@keyframes popup {
+
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.modal-close {
+
+  position: absolute;
+
+  top: 16px;
+  right: 16px;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: var(--danger);
+
+  padding: 0;
+}
+
+/* =========================================
+   ERROR
+========================================= */
+
+.error {
+
+  color: var(--danger);
+
+  font-weight: 600;
+
+  margin-top: 10px;
+}
+
+/* =========================================
+   SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+
+  background: #cbd5e1;
+
+  border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 900px) {
+
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+
+    width: 100%;
+
+    min-height: auto;
+
+    position: relative;
+
+    height: auto;
+
+    flex-direction: row;
+
+    flex-wrap: wrap;
+
+    align-items: center;
+  }
+
+  .content {
+    padding: 20px;
+    margin-left: 0;
+  }
+
+  .item-row,
+  .todo-card {
+
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .item-actions,
+  .todo-actions {
+    width: 100%;
+  }
+
+  button {
+    width: 100%;
+  }
+}
+
