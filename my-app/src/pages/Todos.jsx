@@ -115,27 +115,35 @@ export default function Todos() {
 
     if (editingTodo) {
 
-      const updatedTodo = {
+      const changedFields = {};
 
-        ...editingTodo,
+      if ( todoTitle.trim() !== editingTodo.title) {
+        changedFields.title = todoTitle.trim();
+      }
 
-        title: todoTitle,
-      };
+      if (
+        Object.keys(changedFields)
+          .length === 0
+      ) {
+        setShowTodoModal(false);
+        return;
+      }
 
       await apiPut(
         `/todos/${editingTodo.id}`,
-        updatedTodo
+        changedFields
       );
 
       setTodos((prev) =>
         prev.map((t) =>
-          t.id ===
-          editingTodo.id
-            ? updatedTodo
+          t.id === editingTodo.id
+            ? {
+                ...t,
+                ...changedFields,
+              }
             : t
         )
       );
-
     } else {
 
       const todo = {
@@ -193,23 +201,21 @@ export default function Todos() {
       (t) => t.id === id
     );
 
-    const updatedTodo = {
-
-      ...todo,
-
-      completed:
-        !todo.completed,
-    };
+    const newCompleted =
+      !todo.completed;
 
     await apiPut(
       `/todos/${id}`,
-      updatedTodo
+      {
+        completed:
+          newCompleted,
+      }
     );
 
     setTodos((prev) =>
       prev.map((t) =>
         t.id === id
-          ? updatedTodo
+          ? { ...t, completed: newCompleted }
           : t
       )
     );

@@ -28,12 +28,63 @@ export async function createUser(d) {
   const rows = await query('SELECT * FROM users WHERE id = ?', [id]);
   return toUserPrivate(rows[0]);   // the new user gets their own (private) view
 }
+// export async function updateUser(id, d) {
+//   const cur = (await query('SELECT * FROM users WHERE id = ? AND is_deleted = 0', [id]))[0];
+//   if (!cur) return null;
+//   await query('UPDATE users SET username=?, name=?, email=?, phone=?, website=? WHERE id=?',
+//     [d.username ?? cur.username, d.name ?? cur.name, d.email ?? cur.email,
+//      d.phone ?? cur.phone, d.website ?? cur.website, id]);
+//   return getUserById(id);
+// }
 export async function updateUser(id, d) {
-  const cur = (await query('SELECT * FROM users WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE users SET username=?, name=?, email=?, phone=?, website=? WHERE id=?',
-    [d.username ?? cur.username, d.name ?? cur.name, d.email ?? cur.email,
-     d.phone ?? cur.phone, d.website ?? cur.website, id]);
+
+  const exists = await getUserById(id);
+
+  if (!exists) return null;
+
+  const fields = [];
+  const values = [];
+
+  if (d.username !== undefined) {
+    fields.push('username = ?');
+    values.push(d.username);
+  }
+
+  if (d.name !== undefined) {
+    fields.push('name = ?');
+    values.push(d.name);
+  }
+
+  if (d.email !== undefined) {
+    fields.push('email = ?');
+    values.push(d.email);
+  }
+
+  if (d.phone !== undefined) {
+    fields.push('phone = ?');
+    values.push(d.phone);
+  }
+
+  if (d.website !== undefined) {
+    fields.push('website = ?');
+    values.push(d.website);
+  }
+
+  if (!fields.length) {
+    return getUserById(id);
+  }
+
+  values.push(id);
+
+  await query(
+    `
+    UPDATE users
+    SET ${fields.join(', ')}
+    WHERE id = ?
+    `,
+    values
+  );
+
   return getUserById(id);
 }
 export async function deleteUser(id) {
@@ -81,7 +132,19 @@ export async function verifyLogin(username, password) {
 // ---------- POSTS ----------
 export async function getPosts(filters = {}) {
   const { where, values } = buildFilter(filters, { userId: 'user_id', id: 'id' });
-  const rows = await query(`SELECT * FROM posts ${where} ORDER BY id`, values);
+  const rows = await query(
+  `
+  SELECT
+    p.*,
+    u.name AS owner_name
+  FROM posts p
+  JOIN users u
+    ON p.user_id = u.id
+  ${where.replace("is_deleted", "p.is_deleted")}
+  ORDER BY p.id
+  `,
+  values
+  );
   return rows.map(toPost);
 }
 export async function getPostById(id) {
@@ -98,11 +161,43 @@ export async function createPost(d) {
     [id, d.userId, d.title, d.body]);
   return getPostById(id);
 }
+// export async function updatePost(id, d) {
+//   const cur = (await query('SELECT * FROM posts WHERE id = ? AND is_deleted = 0', [id]))[0];
+//   if (!cur) return null;
+//   await query('UPDATE posts SET user_id=?, title=?, body=? WHERE id=?',
+//     [d.userId ?? cur.user_id, d.title ?? cur.title, d.body ?? cur.body, id]);
+//   return getPostById(id);
+// }
 export async function updatePost(id, d) {
-  const cur = (await query('SELECT * FROM posts WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE posts SET user_id=?, title=?, body=? WHERE id=?',
-    [d.userId ?? cur.user_id, d.title ?? cur.title, d.body ?? cur.body, id]);
+
+  const fields = [];
+  const values = [];
+
+  if (d.title !== undefined) {
+    fields.push('title = ?');
+    values.push(d.title);
+  }
+
+  if (d.body !== undefined) {
+    fields.push('body = ?');
+    values.push(d.body);
+  }
+
+  if (!fields.length) {
+    return getPostById(id);
+  }
+
+  values.push(id);
+
+  await query(
+    `
+    UPDATE posts
+    SET ${fields.join(', ')}
+    WHERE id = ?
+    `,
+    values
+  );
+
   return getPostById(id);
 }
 export async function deletePost(id) {
@@ -134,12 +229,63 @@ export async function createComment(d) {
     [id, d.postId, d.userId, d.name ?? null, d.email ?? null, d.body]);
   return getCommentById(id);
 }
+// export async function updateComment(id, d) {
+//   const cur = (await query('SELECT * FROM comments WHERE id = ? AND is_deleted = 0', [id]))[0];
+//   if (!cur) return null;
+//   await query('UPDATE comments SET post_id=?, user_id=?, name=?, email=?, body=? WHERE id=?',
+//     [d.postId ?? cur.post_id, d.userId ?? cur.user_id, d.name ?? cur.name,
+//      d.email ?? cur.email, d.body ?? cur.body, id]);
+//   return getCommentById(id);
+// }
 export async function updateComment(id, d) {
-  const cur = (await query('SELECT * FROM comments WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE comments SET post_id=?, user_id=?, name=?, email=?, body=? WHERE id=?',
-    [d.postId ?? cur.post_id, d.userId ?? cur.user_id, d.name ?? cur.name,
-     d.email ?? cur.email, d.body ?? cur.body, id]);
+
+  const exists = await getCommentById(id);
+
+  if (!exists) return null;
+
+  const fields = [];
+  const values = [];
+
+  if (d.postId !== undefined) {
+    fields.push('post_id = ?');
+    values.push(d.postId);
+  }
+
+  if (d.userId !== undefined) {
+    fields.push('user_id = ?');
+    values.push(d.userId);
+  }
+
+  if (d.name !== undefined) {
+    fields.push('name = ?');
+    values.push(d.name);
+  }
+
+  if (d.email !== undefined) {
+    fields.push('email = ?');
+    values.push(d.email);
+  }
+
+  if (d.body !== undefined) {
+    fields.push('body = ?');
+    values.push(d.body);
+  }
+
+  if (!fields.length) {
+    return getCommentById(id);
+  }
+
+  values.push(id);
+
+  await query(
+    `
+    UPDATE comments
+    SET ${fields.join(', ')}
+    WHERE id = ?
+    `,
+    values
+  );
+
   return getCommentById(id);
 }
 export async function deleteComment(id) {
@@ -169,12 +315,53 @@ export async function createTodo(d) {
     [id, d.userId, d.title, d.completed ? 1 : 0]);
   return getTodoById(id);
 }
+// export async function updateTodo(id, d) {
+//   const cur = (await query('SELECT * FROM todos WHERE id = ? AND is_deleted = 0', [id]))[0];
+//   if (!cur) return null;
+//   const completed = d.completed !== undefined ? (d.completed ? 1 : 0) : cur.completed;
+//   await query('UPDATE todos SET user_id=?, title=?, completed=? WHERE id=?',
+//     [d.userId ?? cur.user_id, d.title ?? cur.title, completed, id]);
+//   return getTodoById(id);
+// }
 export async function updateTodo(id, d) {
-  const cur = (await query('SELECT * FROM todos WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  const completed = d.completed !== undefined ? (d.completed ? 1 : 0) : cur.completed;
-  await query('UPDATE todos SET user_id=?, title=?, completed=? WHERE id=?',
-    [d.userId ?? cur.user_id, d.title ?? cur.title, completed, id]);
+
+  const exists = await getTodoById(id);
+
+  if (!exists) return null;
+
+  const fields = [];
+  const values = [];
+
+  if (d.userId !== undefined) {
+    fields.push('user_id = ?');
+    values.push(d.userId);
+  }
+
+  if (d.title !== undefined) {
+    fields.push('title = ?');
+    values.push(d.title);
+  }
+
+  if (d.completed !== undefined) {
+    fields.push('completed = ?');
+    values.push(d.completed ? 1 : 0);
+  }
+
+  if (!fields.length) {
+    return getTodoById(id);
+  }
+
+  values.push(id);
+
+  await query(
+    `
+    UPDATE todos
+    SET ${fields.join(', ')}
+    WHERE id = ?
+    `,
+    values
+  );
+
   return getTodoById(id);
 }
 export async function deleteTodo(id) {

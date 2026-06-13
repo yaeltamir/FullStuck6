@@ -25,6 +25,7 @@ export const toPost = (r) => ({
   id: r.id,
   title: r.title,
   body: r.body,
+  ownerName: r.owner_name,
 });
 
 // A comment exposes only who wrote it (name + userId) and the text.

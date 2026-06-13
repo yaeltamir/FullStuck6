@@ -46,6 +46,19 @@ export default function Login() {
 
       return;
     }
+    if (username.length > 30) {
+      setError("Invalid login details");
+      return;
+    }
+
+    if (password.length > 50) {
+      setError("Invalid login details");
+      return;
+    }
+    if (username.includes(" ")) {
+      setError("Invalid login details");
+      return;
+    }
 
     try {
 

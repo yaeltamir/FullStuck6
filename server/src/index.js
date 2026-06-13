@@ -85,6 +85,31 @@ app.post('/register', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+app.get(
+  '/users/check-username/:username',
+  async (req, res, next) => {
+
+    try {
+
+      const users =
+        await q.getUsers({
+          username:
+            req.params.username
+        });
+
+      res.json({
+        exists:
+          users.length > 0
+      });
+
+    } catch (e) {
+
+      next(e);
+
+    }
+  }
+);
+
 // ---- USERS (+ nested todos / posts) ----
 const users = resource({
   list: q.getUsers, getById: q.getUserById, create: q.createUser,

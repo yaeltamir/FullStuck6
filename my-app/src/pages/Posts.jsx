@@ -20,8 +20,6 @@ export default function Posts() {
 
   const [comments, setComments] = useState([]);
 
-  const [postOwner, setPostOwner] = useState(null); // New state for post owner
-
   const [search, setSearch] = useState("");
 
   const [newComment, setNewComment] =  useState("");
@@ -46,9 +44,6 @@ export default function Posts() {
   const [editingPost,
     setEditingPost] =
     useState(null);
-
-  // const [users, setUsers] =
-  //   useState([]);
 
   // ======================
   // COMMENT MODAL
@@ -86,8 +81,6 @@ export default function Posts() {
 
     const data = await apiGet("/posts");
     setPosts(data);
-    // const usersData = await apiGet("/users");
-    // setUsers(usersData);
   }
 
   // ======================
@@ -96,20 +89,7 @@ export default function Posts() {
 
   async function selectPost(post) {
 
-    // if (selectedPost?.id === post.id) {
-    //   setSelectedPost(null);
-    //   setComments([]);
-    //   return;} 
-
     setSelectedPost(post);
-
-    // We already know the owner of our own posts — no need to ask the server.
-    if (post.userId === currentUser.id) {
-      setPostOwner(currentUser);
-    } else {
-      const owner = await apiGet(`/users?id=${post.userId}`);
-      setPostOwner(owner[0]);
-    }
 
     const data = await apiGet(
       `/comments?postId=${post.id}`
@@ -163,22 +143,37 @@ export default function Posts() {
 
     if (editingPost) {
 
-      const updatedPost = {
-        ...editingPost,
-        title: postTitle,
-        body: postBody,
-      };
+      const changedFields = {};
+
+      if (postTitle.trim() !== editingPost.title) {
+        changedFields.title = postTitle.trim();
+      }
+
+      if (postBody.trim() !== editingPost.body) {
+        changedFields.body = postBody.trim();
+      }
+
+      if (Object.keys(changedFields).length === 0) {
+        setShowPostModal(false);
+        return;
+      }
 
       await apiPut(
         `/posts/${editingPost.id}`,
-        updatedPost
+        changedFields
       );
 
-      // update locally instead of re-fetching the whole list
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === editingPost.id ? updatedPost : p
+          p.id === editingPost.id
+            ? {
+                ...p,
+                title: postTitle,
+                body: postBody,
+              }
+            : p
         )
+
       );
 
     } else {
@@ -209,27 +204,6 @@ export default function Posts() {
   // DELETE POST
   // ======================
 
-  // async function deletePost(id) {
-
-  //   await apiDelete(
-  //     `/posts/${id}`
-  //   );
-
-  //   setPosts((prev) =>
-  //     prev.filter(
-  //       (p) => p.id !== id
-  //     )
-  //   );
-
-  //   if (
-  //     selectedPost?.id === id
-  //   ) {
-
-  //     setSelectedPost(null);
-
-  //     setComments([]);
-  //   }
-  // }
   async function deletePost(id) {
 
     // The server soft-deletes the post AND its comments (cascade),
@@ -329,20 +303,21 @@ export default function Posts() {
       return;
     }
 
-    const updatedComment = {
-      ...editingComment,
-      body: commentBody,
-    };
-
     await apiPut(
       `/comments/${editingComment.id}`,
-      updatedComment
+      {
+        body: commentBody
+      }
     );
 
-    // update the comment locally instead of re-fetching
     setComments((prev) =>
       prev.map((c) =>
-        c.id === editingComment.id ? updatedComment : c
+        c.id === editingComment.id
+          ? {
+              ...c,
+              body: commentBody,
+            }
+          : c
       )
     );
 
@@ -408,13 +383,6 @@ export default function Posts() {
         p.userId !==
         currentUser.id
     );
-
-  // const postOwner =
-  //   users.find(
-  //     (u) =>
-  //       u.id ===
-  //       selectedPost?.userId
-  //   );
 
   return (
 
@@ -547,12 +515,8 @@ export default function Posts() {
             ← Back to Posts
           </button>
           <h3>
-
-          {postOwner
-            ? `${postOwner.name}'s Post`
-            : "Post"}
-
-        </h3>
+            {selectedPost.ownerName}'s Post
+          </h3>
           <br />
           <hr />
           <h2>

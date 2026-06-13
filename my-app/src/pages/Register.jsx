@@ -6,6 +6,7 @@ import {
 } from "react-router-dom";
 
 import {
+  apiGet,
   apiPost,
 } from "../api/api";
 
@@ -76,6 +77,25 @@ export default function Register() {
 
     // No need to download all users — the server checks for a duplicate
     // username when we submit (step 2). Here we only validate locally.
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+
+    if (!usernameRegex.test(username)) {
+      setError("Username may contain only letters, numbers and _");
+      return;
+    }
+    const result =
+      await apiGet(
+        `/users/check-username/${username}`
+      );
+
+    if (result.exists) {
+
+      setError(
+        "Username already exists"
+      );
+
+      return;
+    }
     setStep(2);
   }
 
@@ -97,14 +117,29 @@ export default function Register() {
       return;
     }
 
-    if (
-      !email.includes("@")
-    ) {
+    // if (
+    //   !email.includes("@")
+    // ) {
 
-      setError(
-        "Invalid email"
-      );
+    //   setError(
+    //     "Invalid email"
+    //   );
 
+    //   return;
+    // }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      setError("Invalid email");
+      return;
+    }
+    if (name.length > 50) {
+      setError("Name too long");
+      return;
+    }
+
+    if (phone.length > 20) {
+      setError("Phone too long");
       return;
     }
 

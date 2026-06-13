@@ -124,53 +124,72 @@ export default function Home() {
   // SAVE PROFILE
   // ======================
 
-  async function saveProfile() {
+async function saveProfile() {
 
-    if (
-      !name.trim() ||
-      !email.trim()
-    ) {
-      return;
-    }
-
-    if (
-      !email.includes("@")
-    ) {
-
-      alert(
-        "Invalid email"
-      );
-
-      return;
-    }
-
-    const updatedUser = {
-
-      ...user,
-
-      name,
-
-      email,
-
-      phone,
-    };
-
-    await apiPut(
-      `/users/${user.id}`,
-      updatedUser
-    );
-
-    setUser(updatedUser);
-
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(
-        updatedUser
-      )
-    );
-
-    setShowProfileModal(false);
+  if (
+    !name.trim() ||
+    !email.trim()
+  ) {
+    return;
   }
+
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (
+    !emailRegex.test(email)
+  ) {
+    alert("Invalid details");
+    return;
+  }
+
+  if (
+    name.length > 50 ||
+    email.length > 100 ||
+    phone.length > 20
+  ) {
+    alert("Invalid details");
+    return;
+  }
+
+  const updatedFields = {};
+
+  if (name.trim() !== user.name) {
+    updatedFields.name = name.trim();
+  }
+
+  if (email.trim() !== user.email) {
+    updatedFields.email = email.trim();
+  }
+
+  if (phone.trim() !== user.phone) {
+    updatedFields.phone = phone.trim();
+  }
+
+  if (Object.keys(updatedFields).length === 0) {
+    setShowProfileModal(false);
+    return;
+  }
+
+  await apiPut(
+    `/users/${user.id}`,
+    updatedFields
+  );
+
+  const updatedUser = {
+    ...user,
+    ...updatedFields,
+  };
+
+  setUser(updatedUser);
+
+  localStorage.setItem(
+    "currentUser",
+    JSON.stringify(updatedUser)
+  );
+
+  setShowProfileModal(false);
+}
 
   // ======================
   // CHANGE PASSWORD
@@ -185,6 +204,18 @@ export default function Home() {
       !newPassword.trim()
     ) {
       setPasswordMsg("Fill both fields");
+      return;
+    }
+    if (newPassword.length < 4) {
+      setPasswordMsg(
+        "Password must contain at least 4 characters"
+      );
+      return;
+    }
+    if (newPassword === currentPassword) {
+      setPasswordMsg(
+        "New password must be different"
+      );
       return;
     }
 
