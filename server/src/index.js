@@ -6,8 +6,19 @@ import cors from 'cors';
 import { Router } from 'express';
 import * as q from './queries.js';
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidUsername(username) {
+  return /^[a-zA-Z0-9_]+$/.test(username);
+}
+
 const app = express();
-app.use(cors());
+//app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173'
+}));
 app.use(express.json());
 
 // Generic REST router for a resource: GET / , GET /:id , POST / , PUT /:id , DELETE /:id
@@ -34,13 +45,146 @@ function resource({ list, getById, create, update, remove, owns }) {
     catch (e) { next(e); }
   });
   r.post('/', async (req, res, next) => {
-    try { res.status(201).json(await create(req.body)); } catch (e) { next(e); }
+    try {
+      if (req.baseUrl === '/todos')
+      {
+        const { title } = req.body;
+
+        if (
+          typeof title !== 'string' ||
+          !title.trim()
+        ) {
+          return res.status(400).json({
+            error: 'title is required'
+          });
+        }
+      }
+      if (req.baseUrl === '/posts') 
+      {
+        const { title, body } = req.body;
+
+        if (
+          typeof title !== 'string' ||
+          !title.trim()
+        ) {
+          return res.status(400).json({
+            error: 'title is required'
+          });
+        }
+
+        if (
+          typeof body !== 'string' ||
+          !body.trim()
+        ) {
+          return res.status(400).json({
+            error: 'body is required'
+          });
+        }
+
+      }
+      if (req.baseUrl === '/comments') {
+        const { body } = req.body;
+
+        if (
+          typeof body !== 'string' ||
+          !body.trim()
+        ) {
+          return res.status(400).json({
+            error: 'body is required'
+          });
+        }
+      }
+      res.status(201).json(await create(req.body)); } catch (e) { next(e); }
   });
   // PUT/DELETE return only a status – the change was made, no need to
   // echo the whole object back over the network ("don't expose more than needed").
   r.put('/:id', async (req, res, next) => {
     try {
       if (!(await allowed(req, res))) return;
+      if (req.baseUrl === '/users')
+      {
+        const { name, email, phone } = req.body;
+        if (
+          email !== undefined &&
+          !isValidEmail(email)
+        ) {
+          return res.status(400).json({
+            error: 'invalid email'
+          });
+        }
+        if (
+          name !== undefined &&
+          name.length > 50
+        ) {
+          return res.status(400).json({
+            error: 'name too long'
+          });
+        }
+        if (
+          email !== undefined &&
+          email.length > 100
+        ) {
+          return res.status(400).json({
+            error: 'email too long'
+          });
+        }
+        if (
+          phone !== undefined &&
+          phone.length > 20
+        ) {
+          return res.status(400).json({
+            error: 'phone too long'
+          });
+        }
+      }
+      if (req.baseUrl === '/todos') 
+      {
+        const { title } = req.body;
+
+        if (
+          title !== undefined &&
+          !title.trim()
+        ) {
+          return res.status(400).json({
+            error: 'title is required'
+          });
+        }
+      }
+      if (req.baseUrl === '/posts') 
+      {
+        const { title, body } = req.body;
+
+        if (
+          title !== undefined &&
+          !title.trim()
+        ) {
+          return res.status(400).json({
+            error: 'title is required'
+          });
+        }
+
+        if (
+          body !== undefined &&
+          !body.trim()
+        ) {
+          return res.status(400).json({
+            error: 'body is required'
+          });
+        }
+      }
+      if (req.baseUrl === '/comments') 
+      {
+        const { body } = req.body;
+
+        if (
+          body !== undefined &&
+          !body.trim()
+        ) {
+          return res.status(400).json({
+            error: 'body is required'
+          });
+        }
+      }
       const x = await update(req.params.id, req.body);
       x ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
     } catch (e) { next(e); }
@@ -61,9 +205,34 @@ app.get('/', (_req, res) => res.json({ status: 'ok', api: 'fullstack6 (jsonplace
 // Server-side login: validates against the passwords table + blocked flag.
 app.post('/login', async (req, res, next) => {
   try {
-    const { username, password } = req.body;
-    if (!username || !password)
-      return res.status(400).json({ error: 'username and password are required' });
+
+    const username = req.body.username?.trim();
+    const password = req.body.password?.trim();
+
+    if (!username || !password) {
+      return res.status(400).json({
+        error: 'username and password are required'
+      });
+    }
+
+    if (username.includes(' ')) {
+      return res.status(400).json({
+        error: 'username cannot contain spaces'
+      });
+    }
+
+    if (username.length < 3) {
+      return res.status(400).json({
+        error: 'username is too short'
+      });
+    }
+
+    if (password.length < 4) {
+      return res.status(400).json({
+        error: 'password is too short'
+      });
+    }
+
     const r = await q.verifyLogin(username, password);
     if (r.status === 'blocked') return res.status(403).json({ error: 'This account is blocked' });
     if (r.status !== 'ok')      return res.status(401).json({ error: 'Invalid username or password' });
@@ -75,12 +244,51 @@ app.post('/login', async (req, res, next) => {
 // client never has to download the whole user list to check it.
 app.post('/register', async (req, res, next) => {
   try {
-    const { username, password, name, email } = req.body;
+    const username = req.body.username?.trim();
+    const password = req.body.password?.trim();
+    const name = req.body.name?.trim();
+    const email = req.body.email?.trim();
+    const phone = req.body.phone?.trim();
+
     if (!username || !password || !name || !email)
       return res.status(400).json({ error: 'username, password, name and email are required' });
+    if (!isValidUsername(username)) {
+      return res.status(400).json({
+        error: 'invalid username'
+      });
+    }
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        error: 'invalid email'
+      });
+    }
+    if (password.length < 4) {
+      return res.status(400).json({
+        error: 'password must be at least 4 characters'
+      });
+    }
+    if (name.length > 50) {
+      return res.status(400).json({
+        error: 'name too long'
+      });
+    }
+    if (phone && phone.length > 20) {
+      return res.status(400).json({
+        error: 'phone too long'
+      });
+    }
     const existing = await q.getUsers({ username });
-    if (existing.length) return res.status(409).json({ error: 'Username already exists' });
-    const user = await q.createUser(req.body);   // returns the new user, never the password
+    if (existing.length)
+      return res.status(409).json({ error: 'Username already exists' });
+    //const user = await q.createUser(req.body);   // returns the new user, never the password
+    const user = await q.createUser({
+      ...req.body,
+      username,
+      password,
+      name,
+      email,
+      phone
+    });
     res.status(201).json(user);
   } catch (e) { next(e); }
 });
@@ -126,6 +334,11 @@ users.put('/:id/password', async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword)
       return res.status(400).json({ error: 'currentPassword and newPassword are required' });
+    if (newPassword.trim().length < 4) {
+      return res.status(400).json({
+        error: 'new password is too short'
+      });
+    }
     const ok = await q.changePassword(req.params.id, currentPassword, newPassword);
     return ok ? res.json({ success: true })
               : res.status(401).json({ error: 'Current password is incorrect' });
