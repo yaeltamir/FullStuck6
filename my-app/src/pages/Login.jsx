@@ -65,7 +65,7 @@ export default function Login() {
       // The SERVER validates the password (against the passwords table) and
       // whether the account is blocked, then returns a signed JWT + the user.
       const { token, user } = await apiPost(
-        "/login",
+        "/auth/login",
         { username, password }
       );
 

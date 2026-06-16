@@ -7,7 +7,7 @@
 //  is_deleted=1 instead of removing the row.
 // ============================================================
 import bcrypt from 'bcryptjs';
-import { query, nextId, buildFilter } from './db.js';
+import { query, nextId, buildFilter, withTransaction } from './db.js';
 import { toUser, toUserPrivate, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
 
 // ---------- USERS (no password ever returned) ----------
@@ -23,9 +23,14 @@ export async function getUsers(filters = {}) {
     values.push(`%${filters.search}%`, `%${filters.search}%`);
   }
   let sql = `SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY id`;
-  const limit = Math.min(parseInt(filters.limit, 10) || 0, 100);   // hard cap: never dump everyone
+  // Pagination params (jsonplaceholder-style _per_page/_page, or limit/offset),
+  // with a HARD ceiling of 100 — even _per_page=999999 is cut to 100.
+  const MAX_PER_PAGE = 100;
+  const rawLimit = parseInt(filters._per_page ?? filters._limit ?? filters.limit, 10) || 0;
+  const limit = Math.min(rawLimit, MAX_PER_PAGE);
   if (limit > 0) {
-    const offset = Math.max(parseInt(filters.offset, 10) || 0, 0);
+    const page = parseInt(filters._page, 10);
+    const offset = page > 0 ? (page - 1) * limit : Math.max(parseInt(filters.offset, 10) || 0, 0);
     sql += ` LIMIT ${limit} OFFSET ${offset}`;               // integers only (validated) -> safe
   }
   const rows = await query(sql, values);
@@ -116,6 +121,14 @@ export async function deleteUser(id) {
 export async function isAdmin(userId) {
   const rows = await query('SELECT role FROM users WHERE id = ? AND is_deleted = 0', [userId]);
   return rows.length > 0 && rows[0].role === 'admin';
+}
+// For the auth middleware: re-read the user on EVERY request. Returns {id, role}
+// only if the user exists, is not deleted and is NOT blocked — so a stolen/old
+// token for a blocked or deleted user is worthless, and role is always fresh.
+export async function getAuthUser(id) {
+  const rows = await query(
+    'SELECT id, role FROM users WHERE id = ? AND is_deleted = 0 AND is_blocked = 0', [id]);
+  return rows.length ? rows[0] : null;
 }
 // Change own password: only succeeds if the current password matches.
 export async function changePassword(userId, currentPassword, newPassword) {
@@ -237,10 +250,12 @@ export async function updatePost(id, d) {
   return getPostById(id);
 }
 export async function deletePost(id) {
-  const r = await query('UPDATE posts SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
-  // Cascade: when a post is (soft) deleted, its comments go with it.
-  if (r.affectedRows) await query('UPDATE comments SET is_deleted = 1 WHERE post_id = ?', [id]);
-  return r.affectedRows > 0;
+  // One transaction: soft-delete the post's comments first, then the post.
+  return withTransaction(async (conn) => {
+    const [post] = await conn.execute('UPDATE posts SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
+    if (post.affectedRows) await conn.execute('UPDATE comments SET is_deleted = 1 WHERE post_id = ?', [id]);
+    return post.affectedRows > 0;
+  });
 }
 // Ownership check: true = owner, false = not owner, null = not found.
 export async function ownsPost(id, userId) {
@@ -440,10 +455,12 @@ export async function updateAlbum(id, d) {
   return getAlbumById(id);
 }
 export async function deleteAlbum(id) {
-  const r = await query('UPDATE albums SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
-  // Cascade: deleting an album (soft) deletes its photos too.
-  if (r.affectedRows) await query('UPDATE photos SET is_deleted = 1 WHERE album_id = ?', [id]);
-  return r.affectedRows > 0;
+  // One transaction: soft-delete the album's photos first, then the album.
+  return withTransaction(async (conn) => {
+    const [album] = await conn.execute('UPDATE albums SET is_deleted = 1 WHERE id = ? AND is_deleted = 0', [id]);
+    if (album.affectedRows) await conn.execute('UPDATE photos SET is_deleted = 1 WHERE album_id = ?', [id]);
+    return album.affectedRows > 0;
+  });
 }
 export async function ownsAlbum(id, userId) {
   const rows = await query('SELECT user_id FROM albums WHERE id = ? AND is_deleted = 0', [id]);
@@ -453,8 +470,14 @@ export async function ownsAlbum(id, userId) {
 
 // ---------- PHOTOS ----------
 export async function getPhotos(filters = {}) {
-  const { where, values } = buildFilter(filters, { albumId: 'album_id', id: 'id' });
-  const rows = await query(`SELECT * FROM photos ${where} ORDER BY id`, values);
+  const clauses = ['p.is_deleted = 0'];
+  const values = [];
+  if (filters.albumId) { clauses.push('p.album_id = ?'); values.push(filters.albumId); }
+  if (filters.id)      { clauses.push('p.id = ?');       values.push(filters.id); }
+  if (filters.userId)  { clauses.push('a.user_id = ?');  values.push(filters.userId); }   // only my photos
+  const rows = await query(
+    `SELECT p.* FROM photos p JOIN albums a ON a.id = p.album_id
+     WHERE ${clauses.join(' AND ')} ORDER BY p.id`, values);
   return rows.map(toPhoto);
 }
 export async function getPhotoById(id) {

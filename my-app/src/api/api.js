@@ -75,6 +75,11 @@ const BASE_URL = "http://localhost:3000";
 
 const cache = {};
 
+// Clear the in-memory GET cache (call on logout so no data lingers).
+export function clearCache() {
+  for (const k in cache) delete cache[k];
+}
+
 // Send the signed JWT so the server can verify WHO we are. The server reads
 // permissions from the DB by this id — it never trusts the client's claims.
 function authHeaders() {
@@ -106,7 +111,8 @@ export async function apiGet(endpoint) {
   }
 
   const response = await fetch(
-    `${BASE_URL}${endpoint}`
+    `${BASE_URL}${endpoint}`,
+    { headers: { ...authHeaders() } }   // send the token (private reads need it)
   );
 
   if (!response.ok) {

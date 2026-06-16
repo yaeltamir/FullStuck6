@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiGet, apiPut } from "../api/api";
 
-const PAGE_SIZE = 5;   // load users a small page at a time — never "all million" at once
-
 // Admin-only page: search + paginated user list, with block / unblock.
 // A blocked user cannot log in (enforced by the server at login).
 export default function Admin() {
@@ -13,18 +11,19 @@ export default function Admin() {
 
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
+  const [perPage, setPerPage] = useState(8);   // admin chooses; the server caps it at 100
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
 
   // Fetch ONE page from the server (filtered by search). reset=true starts over.
-  async function loadUsers(reset) {
+  async function loadUsers(reset, pp = perPage) {
     const off = reset ? 0 : offset;
     const data = await apiGet(
-      `/users?search=${encodeURIComponent(search)}&limit=${PAGE_SIZE}&offset=${off}`
+      `/users?search=${encodeURIComponent(search)}&_per_page=${pp}&offset=${off}`
     );
     setUsers((prev) => (reset ? data : [...prev, ...data]));
     setOffset(off + data.length);
-    setHasMore(data.length === PAGE_SIZE);   // a full page probably means there's more
+    setHasMore(data.length === pp);   // a full page probably means there's more
   }
 
   useEffect(() => {
@@ -36,6 +35,12 @@ export default function Admin() {
     loadUsers(true);
   }
 
+  function changePerPage(e) {
+    const pp = Number(e.target.value);
+    setPerPage(pp);
+    loadUsers(true, pp);
+  }
+
   async function toggleBlock(u) {
     await apiPut(`/users/${u.id}/block`, { isBlocked: !u.isBlocked });
     setUsers((prev) =>
@@ -43,7 +48,8 @@ export default function Admin() {
     );
   }
 
-  // Guard: only an admin may see this page.
+  // Guard: only an admin may see this page. (The real gate is the server — even
+  // if someone fakes role in localStorage, every admin action is checked there.)
   if (currentUser?.role !== "admin") {
     return <h2>Access denied — admins only.</h2>;
   }
@@ -53,7 +59,7 @@ export default function Admin() {
       <h2>Admin — User Management</h2>
       <hr />
 
-      {/* Search: the server filters, so we never download the whole table */}
+      {/* Search + page size: the server filters/limits, so we never download all */}
       <form className="row" onSubmit={handleSearch}>
         <input
           placeholder="Search by username or name…"
@@ -61,6 +67,11 @@ export default function Admin() {
           onChange={(e) => setSearch(e.target.value)}
         />
         <button type="submit">Search</button>
+        <select value={perPage} onChange={changePerPage}>
+          {[8, 25, 50, 100].map((n) => (
+            <option key={n} value={n}>{n} / page</option>
+          ))}
+        </select>
       </form>
 
       <table className="admin-table">

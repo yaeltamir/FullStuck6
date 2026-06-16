@@ -15,6 +15,7 @@ import Modal from "../pages/Modal";
 import {
   apiGet,
   apiPut,
+  clearCache,
 } from "../api/api";
 
 export default function Home() {
@@ -98,6 +99,7 @@ export default function Home() {
 
     localStorage.removeItem("currentUser");
     localStorage.removeItem("token");
+    clearCache();   // no cached data lingers after logout
 
     navigate("/login", {
       replace: true,

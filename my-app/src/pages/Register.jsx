@@ -147,7 +147,7 @@ export default function Register() {
 
       // Server creates the user + password and checks for duplicates.
       // website is left empty so the password is never stored in a visible field.
-      const { token, user: savedUser } = await apiPost("/register", {
+      const { token, user: savedUser } = await apiPost("/auth/register", {
         username,
         password,
         name,

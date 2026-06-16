@@ -33,16 +33,29 @@ app.use((req, res, next) => {
   next();
 });
 
-// Auth middleware — verify the JWT (if present) and set req.userId to the REAL
-// user id from the SIGNED token. The client cannot forge this. Permissions are
-// NEVER taken from the client; the server reads role from the DB by req.userId.
-app.use((req, _res, next) => {
+// Auth middleware — verify the JWT signature, then RE-READ the user from the DB
+// on every request (existence, blocked, role). The token carries ONLY the user
+// id (sub); permissions are never taken from the token or the client.
+app.use(async (req, _res, next) => {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-  try { req.userId = token ? jwt.verify(token, JWT_SECRET).id : null; }
-  catch { req.userId = null; }
+  req.userId = null;
+  req.userRole = null;
+  if (token) {
+    try {
+      const { sub } = jwt.verify(token, JWT_SECRET);
+      const user = await q.getAuthUser(sub);   // fresh from DB: exists + not blocked + role
+      if (user) { req.userId = user.id; req.userRole = user.role; }
+    } catch { /* invalid/expired token -> stays unauthenticated */ }
+  }
   next();
 });
+
+// Reusable guard for admin-only routes. role came fresh from the DB above.
+function requireAdmin(req, res, next) {
+  if (req.userRole !== 'admin') return res.status(403).json({ error: 'Admin only' });
+  next();
+}
 
 // ---- file uploads (add a photo from the user's computer) ----
 const upload = multer({
@@ -62,7 +75,7 @@ app.post('/upload', upload.single('image'), (req, res) => {
 // Generic REST router for a resource: GET / , GET /:id , POST / , PUT /:id , DELETE /:id
 // If `owns` is provided, PUT and DELETE are allowed ONLY when the active user
 // (sent in the x-user-id header) owns the item — otherwise 403.
-function resource({ list, getById, create, update, remove, owns }) {
+function resource({ list, getById, create, update, remove, owns, isPrivate }) {
   const r = Router();
 
   // Ownership guard for PUT/DELETE. Returns true if the request may proceed.
@@ -76,14 +89,30 @@ function resource({ list, getById, create, update, remove, owns }) {
   }
 
   r.get('/', async (req, res, next) => {
-    try { res.json(await list(req.query)); } catch (e) { next(e); }
+    try {
+      const filters = { ...req.query };
+      if (isPrivate) {                       // private lists return ONLY the owner's items
+        if (!req.userId) return res.status(401).json({ error: 'Login required' });
+        filters.userId = req.userId;         // ignore any userId from the client
+      }
+      res.json(await list(filters));
+    } catch (e) { next(e); }
   });
   r.get('/:id', async (req, res, next) => {
-    try { const x = await getById(req.params.id); x ? res.json(x) : res.status(404).json({}); }
-    catch (e) { next(e); }
+    try {
+      if (isPrivate && owns) {               // a single private item only for its owner
+        const ok = await owns(req.params.id, req.userId);
+        if (ok === null) return res.status(404).json({});
+        if (!ok) return res.status(403).json({ error: 'Forbidden' });
+      }
+      const x = await getById(req.params.id); x ? res.json(x) : res.status(404).json({});
+    } catch (e) { next(e); }
   });
   r.post('/', async (req, res, next) => {
     try {
+      // creating an owned/private item requires a valid token (clean 401, not a 500)
+      if ((isPrivate || owns) && !req.userId)
+        return res.status(401).json({ error: 'Login required' });
       if (req.baseUrl === '/todos')
       {
         const { title } = req.body;
@@ -225,14 +254,14 @@ function resource({ list, getById, create, update, remove, owns }) {
         }
       }
       const x = await update(req.params.id, req.body);
-      x ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+      x ? res.json({ ok: true }) : res.status(404).json({ error: 'Not found' });
     } catch (e) { next(e); }
   });
   r.delete('/:id', async (req, res, next) => {
     try {
       if (!(await allowed(req, res))) return;
       const ok = await remove(req.params.id);
-      ok ? res.json({ success: true }) : res.status(404).json({ error: 'Not found' });
+      ok ? res.json({ ok: true }) : res.status(404).json({ error: 'Not found' });
     } catch (e) { next(e); }
   });
   return r;
@@ -242,7 +271,7 @@ function resource({ list, getById, create, update, remove, owns }) {
 app.get('/', (_req, res) => res.json({ status: 'ok', api: 'fullstack6 (jsonplaceholder-style)' }));
 
 // Server-side login: validates against the passwords table + blocked flag.
-app.post('/login', async (req, res, next) => {
+app.post('/auth/login', async (req, res, next) => {
   try {
 
     const username = req.body.username?.trim();
@@ -274,22 +303,19 @@ app.post('/login', async (req, res, next) => {
 
     const r = await q.verifyLogin(username, password);
     if (r.status === 'blocked')
-      return res.status(403).json({ error: 'This account is blocked (too many failed attempts)' });
-    if (r.status !== 'ok') {
-      const msg = r.attemptsLeft !== undefined
-        ? `Invalid username or password — ${r.attemptsLeft} attempt(s) left before lock`
-        : 'Invalid username or password';
-      return res.status(401).json({ error: msg });
-    }
-    // issue a signed token that proves WHO the user is (not what role they claim)
-    const token = jwt.sign({ id: r.user.id }, JWT_SECRET, { expiresIn: '2h' });
+      return res.status(403).json({ error: 'This account is blocked' });
+    // IDENTICAL message for "wrong password" and "no such user" -> no user enumeration
+    if (r.status !== 'ok')
+      return res.status(401).json({ error: 'Invalid username or password' });
+    // token carries ONLY the user id (sub) — no role, no name
+    const token = jwt.sign({ sub: r.user.id }, JWT_SECRET, { expiresIn: '2h' });
     res.json({ token, user: r.user });
   } catch (e) { next(e); }
 });
 
 // Server-side register: the SERVER checks for a duplicate username, so the
 // client never has to download the whole user list to check it.
-app.post('/register', async (req, res, next) => {
+app.post('/auth/register', async (req, res, next) => {
   try {
     const username = req.body.username?.trim();
     const password = req.body.password?.trim();
@@ -336,7 +362,7 @@ app.post('/register', async (req, res, next) => {
       email,
       phone
     });
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign({ sub: user.id }, JWT_SECRET, { expiresIn: '2h' });
     res.status(201).json({ token, user });
   } catch (e) { next(e); }
 });
@@ -371,9 +397,10 @@ const users = resource({
   list: q.getUsers, getById: q.getUserById, create: q.createUser,
   update: q.updateUser, remove: q.deleteUser, owns: q.ownsUserAccount,
 });
-users.get('/:id/todos',  async (req, res, next) => { try { res.json(await q.getTodos({ userId: req.params.id })); } catch (e) { next(e); } });
+// posts are public; todos/albums are private -> only the user themselves
+users.get('/:id/todos',  async (req, res, next) => { try { if (req.userId !== req.params.id) return res.status(403).json({ error: 'Forbidden' }); res.json(await q.getTodos({ userId: req.params.id })); } catch (e) { next(e); } });
 users.get('/:id/posts',  async (req, res, next) => { try { res.json(await q.getPosts({ userId: req.params.id })); } catch (e) { next(e); } });
-users.get('/:id/albums', async (req, res, next) => { try { res.json(await q.getAlbums({ userId: req.params.id })); } catch (e) { next(e); } });
+users.get('/:id/albums', async (req, res, next) => { try { if (req.userId !== req.params.id) return res.status(403).json({ error: 'Forbidden' }); res.json(await q.getAlbums({ userId: req.params.id })); } catch (e) { next(e); } });
 
 // Change own password – only the user themselves may do it.
 users.put('/:id/password', async (req, res, next) => {
@@ -389,23 +416,20 @@ users.put('/:id/password', async (req, res, next) => {
       });
     }
     const ok = await q.changePassword(req.params.id, currentPassword, newPassword);
-    return ok ? res.json({ success: true })
+    return ok ? res.json({ ok: true })
               : res.status(401).json({ error: 'Current password is incorrect' });
   } catch (e) { next(e); }
 });
 
-// Block / unblock a user – admin only.
-users.put('/:id/block', async (req, res, next) => {
+// Block / unblock a user – admin only (guarded by the requireAdmin middleware).
+users.put('/:id/block', requireAdmin, async (req, res, next) => {
   try {
-    const actor = req.userId;
-    if (!(await q.isAdmin(actor)))
-      return res.status(403).json({ error: 'Admin only' });
-    if (req.params.id === actor)
+    if (req.params.id === req.userId)
       return res.status(403).json({ error: 'You cannot block yourself' });
     if (await q.isAdmin(req.params.id))
       return res.status(403).json({ error: 'Cannot block an admin' });
     const ok = await q.setBlocked(req.params.id, !!req.body.isBlocked);
-    return ok ? res.json({ success: true, isBlocked: !!req.body.isBlocked })
+    return ok ? res.json({ ok: true, isBlocked: !!req.body.isBlocked })
               : res.status(404).json({});
   } catch (e) { next(e); }
 });
@@ -426,24 +450,31 @@ app.use('/comments', resource({
   update: q.updateComment, remove: q.deleteComment, owns: q.ownsComment,
 }));
 
-// ---- TODOS ----
+// ---- TODOS (private: only your own) ----
 app.use('/todos', resource({
   list: q.getTodos, getById: q.getTodoById, create: q.createTodo,
-  update: q.updateTodo, remove: q.deleteTodo, owns: q.ownsTodo,
+  update: q.updateTodo, remove: q.deleteTodo, owns: q.ownsTodo, isPrivate: true,
 }));
 
-// ---- ALBUMS (+ nested photos) ----
+// ---- ALBUMS (private) (+ nested photos) ----
 const albums = resource({
   list: q.getAlbums, getById: q.getAlbumById, create: q.createAlbum,
-  update: q.updateAlbum, remove: q.deleteAlbum, owns: q.ownsAlbum,
+  update: q.updateAlbum, remove: q.deleteAlbum, owns: q.ownsAlbum, isPrivate: true,
 });
-albums.get('/:id/photos', async (req, res, next) => { try { res.json(await q.getAlbumPhotos(req.params.id)); } catch (e) { next(e); } });
+albums.get('/:id/photos', async (req, res, next) => {
+  try {
+    const ok = await q.ownsAlbum(req.params.id, req.userId);   // only the album's owner
+    if (ok === null) return res.status(404).json({});
+    if (!ok) return res.status(403).json({ error: 'Forbidden' });
+    res.json(await q.getAlbumPhotos(req.params.id));
+  } catch (e) { next(e); }
+});
 app.use('/albums', albums);
 
-// ---- PHOTOS ----
+// ---- PHOTOS (private: only photos in your albums) ----
 app.use('/photos', resource({
   list: q.getPhotos, getById: q.getPhotoById, create: q.createPhoto,
-  update: q.updatePhoto, remove: q.deletePhoto, owns: q.ownsPhoto,
+  update: q.updatePhoto, remove: q.deletePhoto, owns: q.ownsPhoto, isPrivate: true,
 }));
 
 // 404 + error handler

@@ -21,6 +21,23 @@ export async function query(sql, params = []) {
   return rows;
 }
 
+// Run several statements inside ONE transaction (all-or-nothing).
+// Used for cascade deletes (e.g. delete a post's comments AND the post together).
+export async function withTransaction(fn) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const result = await fn(conn);
+    await conn.commit();
+    return result;
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+}
+
 // Generate a NON-sequential id (a generator, not a counter). Sequential ids
 // like USR001/USR002 can be guessed and enumerated; a random suffix can't.
 // Keeps the resource prefix (USR, POST, …) + random hex, and verifies it's
