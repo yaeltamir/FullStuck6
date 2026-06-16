@@ -28,9 +28,10 @@ export default function Albums() {
   const [search, setSearch] =
     useState("");
 
-  const [visibleCount,
-    setVisibleCount] =
-    useState(4);
+  // photo pagination — load a few at a time from the server, not all at once
+  const PHOTOS_PAGE = 8;
+  const [photosOffset, setPhotosOffset] = useState(0);
+  const [hasMorePhotos, setHasMorePhotos] = useState(false);
 
   // ======================
   // ALBUM MODAL
@@ -128,12 +129,12 @@ export default function Albums() {
     setSelectedAlbum(album);
 
     const data = await apiGet(
-      `/photos?albumId=${album.id}`
+      `/photos?albumId=${album.id}&_per_page=${PHOTOS_PAGE}&offset=0`
     );
 
     setPhotos(data);
-
-    setVisibleCount(4);
+    setPhotosOffset(data.length);
+    setHasMorePhotos(data.length === PHOTOS_PAGE);
 
     setTimeout(() => {
       window.scrollTo({
@@ -142,6 +143,15 @@ export default function Albums() {
       });
 
     }, 100);
+  }
+
+  async function loadMorePhotos() {
+    const data = await apiGet(
+      `/photos?albumId=${selectedAlbum.id}&_per_page=${PHOTOS_PAGE}&offset=${photosOffset}`
+    );
+    setPhotos((prev) => [...prev, ...data]);
+    setPhotosOffset(photosOffset + data.length);
+    setHasMorePhotos(data.length === PHOTOS_PAGE);
   }
 
   // ======================
@@ -525,10 +535,6 @@ export default function Albums() {
           >
 
             {photos
-              .slice(
-                0,
-                visibleCount
-              )
               .map((photo) => (
 
               <div
@@ -577,19 +583,8 @@ export default function Albums() {
 
           </div>
 
-          {visibleCount <
-            photos.length && (
-
-            <button
-              onClick={() =>
-                setVisibleCount(
-                  (
-                    prev
-                  ) =>
-                    prev + 4
-                )
-              }
-            >
+          {hasMorePhotos && (
+            <button onClick={loadMorePhotos}>
               Load More
             </button>
           )}

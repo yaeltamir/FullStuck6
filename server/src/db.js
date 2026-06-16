@@ -71,3 +71,17 @@ export function buildFilter(queryParams, allowed) {
   const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
   return { where, values };
 }
+
+// Build a "LIMIT x OFFSET y" clause from pagination params (jsonplaceholder-style
+// _per_page/_page, or limit/offset). HARD ceiling of 100 — even _per_page=999999
+// is cut to 100. `defaultLimit` is used when the client asks for no size, so big
+// lists never dump everything by accident. Values are validated integers (safe).
+export function pageClause(filters = {}, defaultLimit = 0) {
+  const MAX_PER_PAGE = 100;
+  const raw = parseInt(filters._per_page ?? filters._limit ?? filters.limit, 10);
+  const limit = Math.min(Number.isFinite(raw) && raw > 0 ? raw : defaultLimit, MAX_PER_PAGE);
+  if (!limit) return '';
+  const page = parseInt(filters._page, 10);
+  const offset = page > 0 ? (page - 1) * limit : Math.max(parseInt(filters.offset, 10) || 0, 0);
+  return ` LIMIT ${limit} OFFSET ${offset}`;
+}

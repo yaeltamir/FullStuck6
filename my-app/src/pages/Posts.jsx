@@ -24,6 +24,14 @@ export default function Posts() {
 
   const [newComment, setNewComment] =  useState("");
 
+  // pagination — never load thousands at once
+  const POSTS_PAGE = 10;
+  const COMMENTS_PAGE = 10;
+  const [postsOffset, setPostsOffset] = useState(0);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
+  const [commentsOffset, setCommentsOffset] = useState(0);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
+
 
   // ======================
   // POST MODAL
@@ -77,10 +85,12 @@ export default function Posts() {
   // LOAD POSTS
   // ======================
 
-  async function loadPosts() {
-
-    const data = await apiGet("/posts");
-    setPosts(data);
+  async function loadPosts(reset = true) {
+    const off = reset ? 0 : postsOffset;
+    const data = await apiGet(`/posts?_per_page=${POSTS_PAGE}&offset=${off}`);
+    setPosts((prev) => (reset ? data : [...prev, ...data]));
+    setPostsOffset(off + data.length);
+    setHasMorePosts(data.length === POSTS_PAGE);   // a full page -> probably more
   }
 
   // ======================
@@ -92,10 +102,21 @@ export default function Posts() {
     setSelectedPost(post);
 
     const data = await apiGet(
-      `/comments?postId=${post.id}`
+      `/comments?postId=${post.id}&_per_page=${COMMENTS_PAGE}&offset=0`
     );
 
     setComments(data);
+    setCommentsOffset(data.length);
+    setHasMoreComments(data.length === COMMENTS_PAGE);
+  }
+
+  async function loadMoreComments() {
+    const data = await apiGet(
+      `/comments?postId=${selectedPost.id}&_per_page=${COMMENTS_PAGE}&offset=${commentsOffset}`
+    );
+    setComments((prev) => [...prev, ...data]);
+    setCommentsOffset(commentsOffset + data.length);
+    setHasMoreComments(data.length === COMMENTS_PAGE);
   }
 
   // ======================
@@ -496,6 +517,12 @@ export default function Posts() {
           </div>
         ))}
 
+        {hasMorePosts && (
+          <button onClick={() => loadPosts(false)}>
+            Load More
+          </button>
+        )}
+
         <hr />
         </>
       )}
@@ -606,6 +633,12 @@ export default function Posts() {
 
             </div>
           ))}
+
+          {hasMoreComments && (
+            <button onClick={loadMoreComments}>
+              Load More Comments
+            </button>
+          )}
 
         </div>
       )}

@@ -7,7 +7,7 @@
 //  is_deleted=1 instead of removing the row.
 // ============================================================
 import bcrypt from 'bcryptjs';
-import { query, nextId, buildFilter, withTransaction } from './db.js';
+import { query, nextId, buildFilter, withTransaction, pageClause } from './db.js';
 import { toUser, toUserPrivate, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
 
 // ---------- USERS (no password ever returned) ----------
@@ -22,17 +22,7 @@ export async function getUsers(filters = {}) {
     clauses.push('(username LIKE ? OR name LIKE ?)');
     values.push(`%${filters.search}%`, `%${filters.search}%`);
   }
-  let sql = `SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY id`;
-  // Pagination params (jsonplaceholder-style _per_page/_page, or limit/offset),
-  // with a HARD ceiling of 100 — even _per_page=999999 is cut to 100.
-  const MAX_PER_PAGE = 100;
-  const rawLimit = parseInt(filters._per_page ?? filters._limit ?? filters.limit, 10) || 0;
-  const limit = Math.min(rawLimit, MAX_PER_PAGE);
-  if (limit > 0) {
-    const page = parseInt(filters._page, 10);
-    const offset = page > 0 ? (page - 1) * limit : Math.max(parseInt(filters.offset, 10) || 0, 0);
-    sql += ` LIMIT ${limit} OFFSET ${offset}`;               // integers only (validated) -> safe
-  }
+  const sql = `SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY id` + pageClause(filters);
   const rows = await query(sql, values);
   return rows.map(toUser);
 }
@@ -191,6 +181,7 @@ export async function getPosts(filters = {}) {
     ON p.user_id = u.id
   ${where.replace("is_deleted", "p.is_deleted")}
   ORDER BY p.id
+  ${pageClause(filters, 10)}
   `,
   values
   );
@@ -267,7 +258,7 @@ export async function ownsPost(id, userId) {
 // ---------- COMMENTS ----------
 export async function getComments(filters = {}) {
   const { where, values } = buildFilter(filters, { postId: 'post_id', userId: 'user_id', id: 'id' });
-  const rows = await query(`SELECT * FROM comments ${where} ORDER BY id`, values);
+  const rows = await query(`SELECT * FROM comments ${where} ORDER BY id` + pageClause(filters, 10), values);
   return rows.map(toComment);
 }
 export async function getCommentById(id) {
@@ -353,7 +344,7 @@ export async function ownsComment(id, userId) {
 // ---------- TODOS ----------
 export async function getTodos(filters = {}) {
   const { where, values } = buildFilter(filters, { userId: 'user_id', completed: 'completed', id: 'id' });
-  const rows = await query(`SELECT * FROM todos ${where} ORDER BY id`, values);
+  const rows = await query(`SELECT * FROM todos ${where} ORDER BY id` + pageClause(filters), values);
   return rows.map(toTodo);
 }
 export async function getTodoById(id) {
@@ -428,7 +419,7 @@ export async function ownsTodo(id, userId) {
 // ---------- ALBUMS ----------
 export async function getAlbums(filters = {}) {
   const { where, values } = buildFilter(filters, { userId: 'user_id', id: 'id' });
-  const rows = await query(`SELECT * FROM albums ${where} ORDER BY id`, values);
+  const rows = await query(`SELECT * FROM albums ${where} ORDER BY id` + pageClause(filters), values);
   return rows.map(toAlbum);
 }
 export async function getAlbumById(id) {
@@ -477,7 +468,7 @@ export async function getPhotos(filters = {}) {
   if (filters.userId)  { clauses.push('a.user_id = ?');  values.push(filters.userId); }   // only my photos
   const rows = await query(
     `SELECT p.* FROM photos p JOIN albums a ON a.id = p.album_id
-     WHERE ${clauses.join(' AND ')} ORDER BY p.id`, values);
+     WHERE ${clauses.join(' AND ')} ORDER BY p.id` + pageClause(filters, 8), values);
   return rows.map(toPhoto);
 }
 export async function getPhotoById(id) {
