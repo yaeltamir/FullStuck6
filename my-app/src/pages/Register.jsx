@@ -156,6 +156,7 @@ export default function Register() {
         website: "",
       });
 
+      localStorage.clear();                          // wipe any stale keys first
       localStorage.setItem("token", token);
       localStorage.setItem(
         "currentUser",

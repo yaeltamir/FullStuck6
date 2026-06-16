@@ -69,6 +69,7 @@ export default function Login() {
         { username, password }
       );
 
+      localStorage.clear();                          // wipe any stale keys first
       localStorage.setItem("token", token);          // proves who we are
       localStorage.setItem(
         "currentUser",
