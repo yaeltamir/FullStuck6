@@ -7,7 +7,6 @@
   "scripts": {
     "start": "node --watch src/index.js",
     "seed:passwords": "node src/seed_passwords.js",
-    "seed:demo": "node src/seed_demo.js",
     "test:db": "node src/test_queries.js"
   },
   "dependencies": {
