@@ -75,13 +75,11 @@ const BASE_URL = "http://localhost:3000";
 
 const cache = {};
 
-// Tell the server who the active user is, so it can enforce ownership
-// (a user may only edit/delete their own posts & comments).
+// Send the signed JWT so the server can verify WHO we are. The server reads
+// permissions from the DB by this id — it never trusts the client's claims.
 function authHeaders() {
-  const u = JSON.parse(
-    localStorage.getItem("currentUser") || "null"
-  );
-  return u ? { "x-user-id": u.id } : {};
+  const token = localStorage.getItem("token");
+  return token ? { "Authorization": `Bearer ${token}` } : {};
 }
 
 // Upload an image file to the server; returns the full URL to use as a photo.

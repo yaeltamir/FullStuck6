@@ -62,19 +62,20 @@ export default function Login() {
 
     try {
 
-      // The SERVER validates the password (against the passwords table)
-      // and whether the account is blocked. It never sends the password.
-      const foundUser = await apiPost(
+      // The SERVER validates the password (against the passwords table) and
+      // whether the account is blocked, then returns a signed JWT + the user.
+      const { token, user } = await apiPost(
         "/login",
         { username, password }
       );
 
+      localStorage.setItem("token", token);          // proves who we are
       localStorage.setItem(
         "currentUser",
-        JSON.stringify(foundUser)
+        JSON.stringify(user)                          // for UI display only
       );
 
-      navigate(`/users/${foundUser.username}/todos`);
+      navigate(`/users/${user.username}/todos`);
 
     } catch (err) {
 

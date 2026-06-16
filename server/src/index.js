@@ -5,9 +5,12 @@ import express from 'express';
 import cors from 'cors';
 import { Router } from 'express';
 import multer from 'multer';
+import jwt from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import { extname } from 'path';
 import * as q from './queries.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -27,6 +30,17 @@ app.use(express.json());
 // Logging middleware — logs every request and its response status.
 app.use((req, res, next) => {
   res.on('finish', () => console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode}`));
+  next();
+});
+
+// Auth middleware — verify the JWT (if present) and set req.userId to the REAL
+// user id from the SIGNED token. The client cannot forge this. Permissions are
+// NEVER taken from the client; the server reads role from the DB by req.userId.
+app.use((req, _res, next) => {
+  const header = req.headers.authorization || '';
+  const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+  try { req.userId = token ? jwt.verify(token, JWT_SECRET).id : null; }
+  catch { req.userId = null; }
   next();
 });
 
@@ -54,7 +68,7 @@ function resource({ list, getById, create, update, remove, owns }) {
   // Ownership guard for PUT/DELETE. Returns true if the request may proceed.
   async function allowed(req, res) {
     if (!owns) return true;
-    const actor = req.header('x-user-id');
+    const actor = req.userId;
     const result = await owns(req.params.id, actor);
     if (result === null) { res.status(404).json({}); return false; }
     if (!result) { res.status(403).json({ error: 'You can only modify your own items' }); return false; }
@@ -118,7 +132,8 @@ function resource({ list, getById, create, update, remove, owns }) {
           });
         }
       }
-      res.status(201).json(await create(req.body)); } catch (e) { next(e); }
+      // the creator is the authenticated user — never trust a userId from the body
+      res.status(201).json(await create({ ...req.body, userId: req.userId ?? req.body.userId })); } catch (e) { next(e); }
   });
   // PUT/DELETE return only a status – the change was made, no need to
   // echo the whole object back over the network ("don't expose more than needed").
@@ -266,7 +281,9 @@ app.post('/login', async (req, res, next) => {
         : 'Invalid username or password';
       return res.status(401).json({ error: msg });
     }
-    res.json(r.user);
+    // issue a signed token that proves WHO the user is (not what role they claim)
+    const token = jwt.sign({ id: r.user.id }, JWT_SECRET, { expiresIn: '2h' });
+    res.json({ token, user: r.user });
   } catch (e) { next(e); }
 });
 
@@ -319,7 +336,8 @@ app.post('/register', async (req, res, next) => {
       email,
       phone
     });
-    res.status(201).json(user);
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '2h' });
+    res.status(201).json({ token, user });
   } catch (e) { next(e); }
 });
 
@@ -360,7 +378,7 @@ users.get('/:id/albums', async (req, res, next) => { try { res.json(await q.getA
 // Change own password – only the user themselves may do it.
 users.put('/:id/password', async (req, res, next) => {
   try {
-    if (req.header('x-user-id') !== req.params.id)
+    if (req.userId !== req.params.id)
       return res.status(403).json({ error: 'You can only change your own password' });
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword)
@@ -379,7 +397,7 @@ users.put('/:id/password', async (req, res, next) => {
 // Block / unblock a user – admin only.
 users.put('/:id/block', async (req, res, next) => {
   try {
-    const actor = req.header('x-user-id');
+    const actor = req.userId;
     if (!(await q.isAdmin(actor)))
       return res.status(403).json({ error: 'Admin only' });
     if (req.params.id === actor)

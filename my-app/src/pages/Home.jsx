@@ -96,9 +96,8 @@ export default function Home() {
 
   function logout() {
 
-    localStorage.removeItem(
-      "currentUser"
-    );
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("token");
 
     navigate("/login", {
       replace: true,
