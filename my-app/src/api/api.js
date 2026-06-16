@@ -84,6 +84,23 @@ function authHeaders() {
   return u ? { "x-user-id": u.id } : {};
 }
 
+// Upload an image file to the server; returns the full URL to use as a photo.
+export async function uploadImage(file) {
+  const form = new FormData();
+  form.append("image", file);
+  const response = await fetch(`${BASE_URL}/upload`, {
+    method: "POST",
+    headers: { ...authHeaders() },   // no Content-Type — the browser sets the multipart boundary
+    body: form,
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || "Upload failed");
+  }
+  const data = await response.json();
+  return `${BASE_URL}${data.url}`;   // e.g. http://localhost:3000/uploads/ab12.jpg
+}
+
 export async function apiGet(endpoint) {
 
   if (cache[endpoint]) {

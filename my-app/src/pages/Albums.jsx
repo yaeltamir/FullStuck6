@@ -10,6 +10,7 @@ import {
   apiPost,
   apiDelete,
   apiPut,
+  uploadImage,
 } from "../api/api";
 
 export default function Albums() {
@@ -66,6 +67,26 @@ export default function Albums() {
   const [editingPhoto,
     setEditingPhoto] =
     useState(null);
+
+  const [uploading,
+    setUploading] =
+    useState(false);
+
+  // Upload a chosen file and fill the URL field with the returned image URL.
+  async function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const url = await uploadImage(file);
+      setPhotoUrl(url);
+      if (!photoTitle.trim()) setPhotoTitle(file.name);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setUploading(false);
+    }
+  }
 
   const currentUser = JSON.parse(
     localStorage.getItem(
@@ -662,8 +683,29 @@ export default function Albums() {
           "
         />
 
+        <p style={{ margin: "6px 0", color: "var(--muted, #777)" }}>
+          — or upload from your computer —
+        </p>
+
+        <input
+          type="file"
+          accept="image/*"
+          onChange={handleFileChange}
+        />
+
+        {uploading && <p>Uploading…</p>}
+
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt="preview"
+            style={{ width: "100%", maxHeight: 180, objectFit: "cover", borderRadius: 12, marginTop: 8 }}
+          />
+        )}
+
         <button
           onClick={savePhoto}
+          disabled={uploading}
         >
           Save
         </button>
