@@ -48,6 +48,15 @@ export default function Admin() {
     );
   }
 
+  // Promote a user to admin / demote an admin to user.
+  async function toggleRole(u) {
+    const newRole = u.role === "admin" ? "user" : "admin";
+    await apiPut(`/users/${u.id}/role`, { role: newRole });
+    setUsers((prev) =>
+      prev.map((x) => (x.id === u.id ? { ...x, role: newRole } : x))
+    );
+  }
+
   // Guard: only an admin may see this page. (The real gate is the server — even
   // if someone fakes role in localStorage, every admin action is checked there.)
   if (currentUser?.role !== "admin") {
@@ -92,16 +101,27 @@ export default function Admin() {
               <td>{u.role}</td>
               <td>{u.isBlocked ? "🚫 Blocked" : "✅ Active"}</td>
               <td>
-                {/* an admin cannot block themselves or another admin */}
-                {u.id !== currentUser.id && u.role !== "admin" ? (
-                  <button
-                    className={u.isBlocked ? "btn-secondary" : "btn-danger"}
-                    onClick={() => toggleBlock(u)}
-                  >
-                    {u.isBlocked ? "Unblock" : "Block"}
-                  </button>
-                ) : (
+                {u.id === currentUser.id ? (
                   <span>—</span>
+                ) : (
+                  <>
+                    {/* promote / demote */}
+                    <button
+                      className="btn-secondary"
+                      onClick={() => toggleRole(u)}
+                    >
+                      {u.role === "admin" ? "Remove Admin" : "Make Admin"}
+                    </button>
+                    {/* an admin cannot be blocked */}
+                    {u.role === "user" && (
+                      <button
+                        className={u.isBlocked ? "btn-secondary" : "btn-danger"}
+                        onClick={() => toggleBlock(u)}
+                      >
+                        {u.isBlocked ? "Unblock" : "Block"}
+                      </button>
+                    )}
+                  </>
                 )}
               </td>
             </tr>

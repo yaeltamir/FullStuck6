@@ -139,6 +139,11 @@ export async function setBlocked(id, blocked) {
   const r = await query(sql, [id]);
   return r.affectedRows > 0;
 }
+// Set a user's role ('user' or 'admin') — admin action.
+export async function setRole(id, role) {
+  const r = await query('UPDATE users SET role = ? WHERE id = ? AND is_deleted = 0', [role, id]);
+  return r.affectedRows > 0;
+}
 // You may only edit/delete your OWN account (profile).
 export async function ownsUserAccount(id, actorId) {
   const rows = await query('SELECT id FROM users WHERE id = ? AND is_deleted = 0', [id]);

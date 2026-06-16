@@ -50,4 +50,18 @@ users.put('/:id/block', requireAdmin, async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+// Change a user's role (promote to admin / demote to user) — admin only.
+users.put('/:id/role', requireAdmin, async (req, res, next) => {
+  try {
+    const { role } = req.body;
+    if (role !== 'user' && role !== 'admin')
+      return res.status(400).json({ error: "role must be 'user' or 'admin'" });
+    if (req.params.id === req.userId && role === 'user')
+      return res.status(403).json({ error: 'You cannot remove your own admin' });
+    const ok = await q.setRole(req.params.id, role);
+    return ok ? res.json({ ok: true, role })
+              : res.status(404).json({});
+  } catch (e) { next(e); }
+});
+
 export default users;
