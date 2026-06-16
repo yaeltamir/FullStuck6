@@ -92,3 +92,28 @@ CREATE TABLE comments (
     REFERENCES users(id) ON DELETE CASCADE,
   INDEX idx_comment_post (post_id)
 );
+
+-- ------------------------------------------------------------
+--  albums + photos (advanced stage)
+-- ------------------------------------------------------------
+CREATE TABLE albums (
+  id          VARCHAR(20) PRIMARY KEY,
+  user_id     VARCHAR(20) NOT NULL,
+  title       VARCHAR(255) NOT NULL,
+  is_deleted  TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_album_user FOREIGN KEY (user_id)
+    REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_album_user (user_id)
+);
+
+CREATE TABLE photos (
+  id             VARCHAR(20) PRIMARY KEY,
+  album_id       VARCHAR(20) NOT NULL,
+  title          VARCHAR(255) NOT NULL,
+  url            VARCHAR(500),
+  thumbnail_url  VARCHAR(500),
+  is_deleted     TINYINT(1) NOT NULL DEFAULT 0,
+  CONSTRAINT fk_photo_album FOREIGN KEY (album_id)
+    REFERENCES albums(id) ON DELETE CASCADE,
+  INDEX idx_photo_album (album_id)
+);

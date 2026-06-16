@@ -325,6 +325,7 @@ const users = resource({
 });
 users.get('/:id/todos',  async (req, res, next) => { try { res.json(await q.getTodos({ userId: req.params.id })); } catch (e) { next(e); } });
 users.get('/:id/posts',  async (req, res, next) => { try { res.json(await q.getPosts({ userId: req.params.id })); } catch (e) { next(e); } });
+users.get('/:id/albums', async (req, res, next) => { try { res.json(await q.getAlbums({ userId: req.params.id })); } catch (e) { next(e); } });
 
 // Change own password – only the user themselves may do it.
 users.put('/:id/password', async (req, res, next) => {
@@ -376,6 +377,20 @@ app.use('/comments', resource({
 app.use('/todos', resource({
   list: q.getTodos, getById: q.getTodoById, create: q.createTodo,
   update: q.updateTodo, remove: q.deleteTodo, owns: q.ownsTodo,
+}));
+
+// ---- ALBUMS (+ nested photos) ----
+const albums = resource({
+  list: q.getAlbums, getById: q.getAlbumById, create: q.createAlbum,
+  update: q.updateAlbum, remove: q.deleteAlbum, owns: q.ownsAlbum,
+});
+albums.get('/:id/photos', async (req, res, next) => { try { res.json(await q.getAlbumPhotos(req.params.id)); } catch (e) { next(e); } });
+app.use('/albums', albums);
+
+// ---- PHOTOS ----
+app.use('/photos', resource({
+  list: q.getPhotos, getById: q.getPhotoById, create: q.createPhoto,
+  update: q.updatePhoto, remove: q.deletePhoto, owns: q.ownsPhoto,
 }));
 
 // 404 + error handler

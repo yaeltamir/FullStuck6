@@ -45,7 +45,16 @@ out.push(rows(db.posts, 4, (p) => [p.id, p.userId, p.title, p.body]) + ';\n');
 out.push('INSERT INTO comments (id, post_id, user_id, name, email, body) VALUES');
 out.push(rows(db.comments, 6, (c) => [c.id, c.postId, c.userId, c.name, c.email, c.body]) + ';\n');
 
+if (db.albums?.length) {
+  out.push('INSERT INTO albums (id, user_id, title) VALUES');
+  out.push(rows(db.albums, 3, (a) => [a.id, a.userId, a.title]) + ';\n');
+}
+if (db.photos?.length) {
+  out.push('INSERT INTO photos (id, album_id, title, url, thumbnail_url) VALUES');
+  out.push(rows(db.photos, 5, (p) => [p.id, p.albumId, p.title, p.url, p.thumbnailUrl]) + ';\n');
+}
+
 writeFileSync(join(here, 'seed.sql'), out.join('\n'));
 console.log('Wrote seed.sql:',
   `${db.users.length} users, ${db.todos.length} todos, ${db.posts.length} posts,`,
-  `${db.comments.length} comments`);
+  `${db.comments.length} comments, ${db.albums?.length || 0} albums, ${db.photos?.length || 0} photos`);
