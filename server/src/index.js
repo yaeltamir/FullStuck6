@@ -4,6 +4,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 
+import { query } from './db.js';
 import { authMiddleware } from './middleware/auth.js';
 import uploadRoutes from './routes/upload.routes.js';
 import authRoutes from './routes/auth.routes.js';
@@ -41,4 +42,13 @@ app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 app.use((err, _req, res, _next) => { console.error(err); res.status(500).json({ error: 'Server error' }); });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server listening on http://localhost:${PORT}`));
+app.listen(PORT, async () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+  try {
+    await query('SELECT 1');
+    console.log('✅ Connected to MySQL');
+  } catch (e) {
+    console.error('❌ Cannot connect to MySQL. Check DB_USER / DB_PASSWORD / DB_NAME in server/.env');
+    console.error('   MySQL says:', e.code || e.message);
+  }
+});
