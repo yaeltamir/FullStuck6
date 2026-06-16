@@ -21,6 +21,12 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Logging middleware — logs every request and its response status.
+app.use((req, res, next) => {
+  res.on('finish', () => console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode}`));
+  next();
+});
+
 // Generic REST router for a resource: GET / , GET /:id , POST / , PUT /:id , DELETE /:id
 // If `owns` is provided, PUT and DELETE are allowed ONLY when the active user
 // (sent in the x-user-id header) owns the item — otherwise 403.
@@ -349,8 +355,13 @@ users.put('/:id/password', async (req, res, next) => {
 // Block / unblock a user – admin only.
 users.put('/:id/block', async (req, res, next) => {
   try {
-    if (!(await q.isAdmin(req.header('x-user-id'))))
+    const actor = req.header('x-user-id');
+    if (!(await q.isAdmin(actor)))
       return res.status(403).json({ error: 'Admin only' });
+    if (req.params.id === actor)
+      return res.status(403).json({ error: 'You cannot block yourself' });
+    if (await q.isAdmin(req.params.id))
+      return res.status(403).json({ error: 'Cannot block an admin' });
     const ok = await q.setBlocked(req.params.id, !!req.body.isBlocked);
     return ok ? res.json({ success: true, isBlocked: !!req.body.isBlocked })
               : res.status(404).json({});

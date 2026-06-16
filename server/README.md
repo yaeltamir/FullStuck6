@@ -15,15 +15,18 @@ mysql -u root < schema.sql
 mysql -u root < seed.sql
 mysql -u root < restrict_access.sql   # optional: least-privilege DB user
 
-# 2) run the server
+# 2) configure + run the server
 cd ..
+cp .env.example .env           # then edit .env with your MySQL settings
 npm install
+npm run seed:passwords         # hashes the demo passwords (bcrypt) into the DB
 npm start                      # http://localhost:3000  (node --watch)
 npm run test:db                # self-test the dedicated DB functions
 ```
 
-DB connection can be overridden with env vars:
-`DB_HOST DB_PORT DB_USER DB_PASSWORD DB_NAME` (default db: `fullstack6`).
+DB settings are read from `.env` (see `.env.example`):
+`DB_HOST DB_PORT DB_USER DB_PASSWORD DB_NAME PORT`. `.env` is git-ignored —
+each developer keeps their own.
 
 ## Layout
 

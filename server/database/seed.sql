@@ -6,11 +6,6 @@ INSERT INTO users (id, username, name, email, phone, website, role) VALUES
   ('USR002', 'yael', 'Yael Tamir', 'yael@gmail.com', '0549024970', '214654121', 'admin'),
   ('USR003', 'hadas', 'Hadas Levi', 'hadas@gmail.com', '0521112233', '12345678', 'user');
 
-INSERT INTO passwords (user_id, password) VALUES
-  ('USR001', '040562910'),
-  ('USR002', '214654121'),
-  ('USR003', '12345678');
-
 INSERT INTO todos (id, user_id, title, completed) VALUES
   ('TD001', 'USR001', 'Prepare learning presentation', 0),
   ('TD002', 'USR001', 'Upload project files', 1),

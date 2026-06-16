@@ -33,8 +33,8 @@ out.push('INSERT INTO users (id, username, name, email, phone, website, role) VA
 out.push(rows(db.users, 7, (u) =>
   [u.id, u.username, u.name, u.email, u.phone, u.website, u.username === 'yael' ? 'admin' : 'user']) + ';\n');
 
-out.push('INSERT INTO passwords (user_id, password) VALUES');
-out.push(rows(db.users, 2, (u) => [u.id, u.password]) + ';\n');
+// NOTE: passwords are NOT seeded here — they must be HASHED (bcrypt), which we
+// do in Node. Run `npm run seed:passwords` after loading schema.sql + seed.sql.
 
 out.push('INSERT INTO todos (id, user_id, title, completed) VALUES');
 out.push(rows(db.todos, 4, (t) => [t.id, t.userId, t.title, t.completed]) + ';\n');

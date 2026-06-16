@@ -6,6 +6,7 @@
 //  buildFilter, single/nested reads explicitly). deleteX() sets
 //  is_deleted=1 instead of removing the row.
 // ============================================================
+import bcrypt from 'bcryptjs';
 import { query, nextId, buildFilter } from './db.js';
 import { toUser, toUserPrivate, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
 
@@ -24,7 +25,10 @@ export async function createUser(d) {
   await query(
     'INSERT INTO users (id, username, name, email, phone, website) VALUES (?,?,?,?,?,?)',
     [id, d.username, d.name, d.email, d.phone ?? null, d.website ?? null]);
-  if (d.password) await query('INSERT INTO passwords (user_id, password) VALUES (?,?)', [id, d.password]);
+  if (d.password) {
+    const hash = await bcrypt.hash(d.password, 10);   // never store a plain password
+    await query('INSERT INTO passwords (user_id, password) VALUES (?,?)', [id, hash]);
+  }
   const rows = await query('SELECT * FROM users WHERE id = ?', [id]);
   return toUserPrivate(rows[0]);   // the new user gets their own (private) view
 }
@@ -101,8 +105,11 @@ export async function isAdmin(userId) {
 // Change own password: only succeeds if the current password matches.
 export async function changePassword(userId, currentPassword, newPassword) {
   const rows = await query('SELECT password FROM passwords WHERE user_id = ?', [userId]);
-  if (!rows.length || rows[0].password !== currentPassword) return false;
-  await query('UPDATE passwords SET password = ? WHERE user_id = ?', [newPassword, userId]);
+  if (!rows.length) return false;
+  const ok = await bcrypt.compare(currentPassword, rows[0].password);   // compare against the hash
+  if (!ok) return false;
+  const hash = await bcrypt.hash(newPassword, 10);
+  await query('UPDATE passwords SET password = ? WHERE user_id = ?', [hash, userId]);
   return true;
 }
 // Block / unblock a user (admin action).
@@ -125,7 +132,8 @@ export async function verifyLogin(username, password) {
   const user = users[0];
   if (user.is_blocked) return { status: 'blocked' };
   const creds = await query('SELECT password FROM passwords WHERE user_id = ?', [user.id]);
-  if (!creds.length || creds[0].password !== password) return { status: 'invalid' };
+  const ok = creds.length && await bcrypt.compare(password, creds[0].password);   // hash compare
+  if (!ok) return { status: 'invalid' };
   return { status: 'ok', user: toUserPrivate(user) };   // your own (private) view
 }
 
@@ -394,10 +402,13 @@ export async function createAlbum(d) {
   return getAlbumById(id);
 }
 export async function updateAlbum(id, d) {
-  const cur = (await query('SELECT * FROM albums WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE albums SET user_id=?, title=? WHERE id=?',
-    [d.userId ?? cur.user_id, d.title ?? cur.title, id]);
+  const exists = await getAlbumById(id);
+  if (!exists) return null;
+  const fields = [], values = [];
+  if (d.title !== undefined) { fields.push('title = ?'); values.push(d.title); }
+  if (!fields.length) return getAlbumById(id);
+  values.push(id);
+  await query(`UPDATE albums SET ${fields.join(', ')} WHERE id = ?`, values);
   return getAlbumById(id);
 }
 export async function deleteAlbum(id) {
@@ -429,11 +440,15 @@ export async function createPhoto(d) {
   return getPhotoById(id);
 }
 export async function updatePhoto(id, d) {
-  const cur = (await query('SELECT * FROM photos WHERE id = ? AND is_deleted = 0', [id]))[0];
-  if (!cur) return null;
-  await query('UPDATE photos SET album_id=?, title=?, url=?, thumbnail_url=? WHERE id=?',
-    [d.albumId ?? cur.album_id, d.title ?? cur.title, d.url ?? cur.url,
-     d.thumbnailUrl ?? cur.thumbnail_url, id]);
+  const exists = await getPhotoById(id);
+  if (!exists) return null;
+  const fields = [], values = [];
+  if (d.title !== undefined)        { fields.push('title = ?');         values.push(d.title); }
+  if (d.url !== undefined)          { fields.push('url = ?');           values.push(d.url); }
+  if (d.thumbnailUrl !== undefined) { fields.push('thumbnail_url = ?'); values.push(d.thumbnailUrl); }
+  if (!fields.length) return getPhotoById(id);
+  values.push(id);
+  await query(`UPDATE photos SET ${fields.join(', ')} WHERE id = ?`, values);
   return getPhotoById(id);
 }
 export async function deletePhoto(id) {

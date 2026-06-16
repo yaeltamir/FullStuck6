@@ -1,6 +1,8 @@
 // MySQL connection pool + small helpers shared by all query functions.
 // Settings can be overridden with env vars so the same code can run as
 // root (dev) or as the least-privilege app_user (see restrict_access.sql).
+import 'dotenv/config';                 // load DB settings from .env
+import { randomBytes } from 'crypto';
 import mysql from 'mysql2/promise';
 
 export const pool = mysql.createPool({
@@ -19,17 +21,17 @@ export async function query(sql, params = []) {
   return rows;
 }
 
-// Generate the next string id for a table, keeping the existing
-// format (e.g. POST001 -> POST002). Only ids with the given prefix
-// are considered, so stray ids never break the sequence.
-export async function nextId(table, prefix, width = 3) {
-  const rows = await query(`SELECT id FROM ${table} WHERE id LIKE ?`, [`${prefix}%`]);
-  let max = 0;
-  for (const r of rows) {
-    const n = parseInt(String(r.id).slice(prefix.length), 10);
-    if (!Number.isNaN(n) && n > max) max = n;
+// Generate a NON-sequential id (a generator, not a counter). Sequential ids
+// like USR001/USR002 can be guessed and enumerated; a random suffix can't.
+// Keeps the resource prefix (USR, POST, …) + random hex, and verifies it's
+// unique before returning it.
+export async function nextId(table, prefix) {
+  for (let i = 0; i < 5; i++) {
+    const id = prefix + randomBytes(5).toString('hex');   // e.g. USR3f9a2b7c1d
+    const rows = await query(`SELECT id FROM ${table} WHERE id = ?`, [id]);
+    if (!rows.length) return id;
   }
-  return prefix + String(max + 1).padStart(width, '0');
+  throw new Error('Failed to generate a unique id');
 }
 
 // Build a WHERE clause from the query-string filters jsonplaceholder
