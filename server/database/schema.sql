@@ -27,9 +27,10 @@ CREATE TABLE users (
   email       VARCHAR(120) NOT NULL,
   phone       VARCHAR(40),
   website     VARCHAR(120),
-  role        ENUM('user','admin') NOT NULL DEFAULT 'user',  -- admin manages the system
-  is_blocked  TINYINT(1)   NOT NULL DEFAULT 0,               -- a blocked user cannot log in
-  is_deleted  TINYINT(1)   NOT NULL DEFAULT 0
+  role            ENUM('user','admin') NOT NULL DEFAULT 'user',  -- admin manages the system
+  is_blocked      TINYINT(1)   NOT NULL DEFAULT 0,               -- a blocked user cannot log in
+  failed_attempts TINYINT      NOT NULL DEFAULT 0,               -- wrong-password counter (lock at 5)
+  is_deleted      TINYINT(1)   NOT NULL DEFAULT 0
 );
 
 -- ------------------------------------------------------------

@@ -11,9 +11,24 @@ import { query, nextId, buildFilter } from './db.js';
 import { toUser, toUserPrivate, toPost, toComment, toTodo, toAlbum, toPhoto } from './mappers.js';
 
 // ---------- USERS (no password ever returned) ----------
+// Supports exact lookups (username/id), free-text search, and pagination.
+// limit/offset let the admin load users a page at a time — never "all million".
 export async function getUsers(filters = {}) {
-  const { where, values } = buildFilter(filters, { username: 'username', id: 'id' });
-  const rows = await query(`SELECT * FROM users ${where} ORDER BY id`, values);
+  const clauses = ['is_deleted = 0'];
+  const values = [];
+  if (filters.username) { clauses.push('username = ?'); values.push(filters.username); }
+  if (filters.id)       { clauses.push('id = ?');       values.push(filters.id); }
+  if (filters.search) {                                       // match username OR name
+    clauses.push('(username LIKE ? OR name LIKE ?)');
+    values.push(`%${filters.search}%`, `%${filters.search}%`);
+  }
+  let sql = `SELECT * FROM users WHERE ${clauses.join(' AND ')} ORDER BY id`;
+  const limit = Math.min(parseInt(filters.limit, 10) || 0, 100);   // hard cap: never dump everyone
+  if (limit > 0) {
+    const offset = Math.max(parseInt(filters.offset, 10) || 0, 0);
+    sql += ` LIMIT ${limit} OFFSET ${offset}`;               // integers only (validated) -> safe
+  }
+  const rows = await query(sql, values);
   return rows.map(toUser);
 }
 export async function getUserById(id) {
@@ -114,8 +129,11 @@ export async function changePassword(userId, currentPassword, newPassword) {
 }
 // Block / unblock a user (admin action).
 export async function setBlocked(id, blocked) {
-  const r = await query('UPDATE users SET is_blocked = ? WHERE id = ? AND is_deleted = 0',
-    [blocked ? 1 : 0, id]);
+  // Unblocking also resets the failed-password counter so the user gets a fresh start.
+  const sql = blocked
+    ? 'UPDATE users SET is_blocked = 1 WHERE id = ? AND is_deleted = 0'
+    : 'UPDATE users SET is_blocked = 0, failed_attempts = 0 WHERE id = ? AND is_deleted = 0';
+  const r = await query(sql, [id]);
   return r.affectedRows > 0;
 }
 // You may only edit/delete your OWN account (profile).
@@ -133,7 +151,17 @@ export async function verifyLogin(username, password) {
   if (user.is_blocked) return { status: 'blocked' };
   const creds = await query('SELECT password FROM passwords WHERE user_id = ?', [user.id]);
   const ok = creds.length && await bcrypt.compare(password, creds[0].password);   // hash compare
-  if (!ok) return { status: 'invalid' };
+  if (!ok) {
+    const attempts = user.failed_attempts + 1;
+    if (attempts >= 5) {                                  // 5 wrong tries -> lock the account
+      await query('UPDATE users SET failed_attempts = ?, is_blocked = 1 WHERE id = ?', [attempts, user.id]);
+      return { status: 'blocked' };
+    }
+    await query('UPDATE users SET failed_attempts = ? WHERE id = ?', [attempts, user.id]);
+    return { status: 'invalid', attemptsLeft: 5 - attempts };
+  }
+  if (user.failed_attempts > 0)                            // success -> reset the counter
+    await query('UPDATE users SET failed_attempts = 0 WHERE id = ?', [user.id]);
   return { status: 'ok', user: toUserPrivate(user) };   // your own (private) view
 }
 

@@ -258,8 +258,14 @@ app.post('/login', async (req, res, next) => {
     }
 
     const r = await q.verifyLogin(username, password);
-    if (r.status === 'blocked') return res.status(403).json({ error: 'This account is blocked' });
-    if (r.status !== 'ok')      return res.status(401).json({ error: 'Invalid username or password' });
+    if (r.status === 'blocked')
+      return res.status(403).json({ error: 'This account is blocked (too many failed attempts)' });
+    if (r.status !== 'ok') {
+      const msg = r.attemptsLeft !== undefined
+        ? `Invalid username or password — ${r.attemptsLeft} attempt(s) left before lock`
+        : 'Invalid username or password';
+      return res.status(401).json({ error: msg });
+    }
     res.json(r.user);
   } catch (e) { next(e); }
 });
