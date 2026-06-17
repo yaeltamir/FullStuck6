@@ -18,7 +18,7 @@ import photosRoutes from './routes/photos.routes.js';
 const app = express();
 
 // ---- global middleware ----
-app.use(cors({ origin: 'http://localhost:5173' }));   // only our client may call the API
+app.use(cors({ origin: 'http://localhost:5173' }));   // only our client may call the API cors!!!
 app.use(express.json());
 app.use((req, res, next) => {                         // request logger
   res.on('finish', () => console.log(`${req.method} ${req.originalUrl} -> ${res.statusCode}`));
